@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Stripe;
+using IamUser = RebooTech.Fruitlogix.Platform.Iam.Domain.Model.Aggregates.User;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -51,6 +52,10 @@ public class PaymentsController : ControllerBase
     [HttpPost("subscribe")]
     public async Task<IActionResult> CreateSubscription([FromBody] CreateSubscriptionResource resource)
     {
+        // TS17: el webhook necesita saber a qué usuario activar como "Miembro Pro".
+        // El usuario sale del JWT (middleware IAM), nunca del body.
+        if (HttpContext.Items["User"] is not IamUser user) return Unauthorized();
+
         try
         {
             // 1. Creamos el cliente en los servidores de Stripe
@@ -75,7 +80,8 @@ public class PaymentsController : ControllerBase
                 {
                     { "PlanType", resource.PlanType },
                     { "PaymentType", "SaaS_Subscription" },
-                    { "UserEmail", resource.Email }
+                    { "UserEmail", resource.Email },
+                    { "UserId", user.Id.ToString() }
                 }
             };
 
@@ -85,7 +91,10 @@ public class PaymentsController : ControllerBase
             return Ok(new 
             { 
                 customerId = customer.Id,
-                clientSecret = intent.ClientSecret 
+                clientSecret = intent.ClientSecret,
+                paymentIntentId = intent.Id,
+                amount = 29.00m,
+                currency = "USD"
             });
         }
         catch (StripeException e)

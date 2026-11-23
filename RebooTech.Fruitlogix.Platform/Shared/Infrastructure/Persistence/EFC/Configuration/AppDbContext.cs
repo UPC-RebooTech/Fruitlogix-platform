@@ -322,6 +322,14 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<PaymentTransaction>().Property(t => t.Method).HasConversion<string>().IsRequired();
         builder.Entity<PaymentTransaction>().Property(t => t.Gateway).HasConversion<string>().IsRequired();
         builder.Entity<PaymentTransaction>().Property(t => t.Status).HasConversion<string>().IsRequired();
+
+        builder.Entity<Membership>().HasKey(m => m.Id);
+        builder.Entity<Membership>().Property(m => m.Id).IsRequired().ValueGeneratedOnAdd();
+        builder.Entity<Membership>().Property(m => m.UserId).IsRequired();
+        builder.Entity<Membership>().HasIndex(m => m.UserId).IsUnique();
+        builder.Entity<Membership>().Property(m => m.Plan).HasConversion<string>().HasMaxLength(10).IsRequired();
+        builder.Entity<Membership>().Property(m => m.GatewayRef).HasMaxLength(100).IsRequired(false);
+        builder.Entity<Membership>().Property(m => m.ActivatedAt).IsRequired(false);
         
         // IoTInfrastructure
         builder.Entity<IoTDevice>().HasKey(d => d.Id);

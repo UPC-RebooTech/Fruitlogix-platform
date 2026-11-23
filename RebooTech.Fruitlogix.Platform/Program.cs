@@ -108,6 +108,9 @@ builder.Services.AddScoped<IInvoiceQueryService, InvoiceQueryService>();
 builder.Services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
 builder.Services.AddScoped<IPaymentTransactionCommandService, PaymentTransactionCommandService>();
 builder.Services.AddScoped<IPaymentTransactionQueryService, PaymentTransactionQueryService>();
+builder.Services.AddScoped<IMembershipRepository, MembershipRepository>();
+builder.Services.AddScoped<IMembershipCommandService, MembershipCommandService>();
+builder.Services.AddScoped<IMembershipQueryService, MembershipQueryService>();
 
 // ── IoTInfrastructure ─────────────────────────────────────────────────────────
 builder.Services.AddScoped<IIoTDeviceRepository, IoTDeviceRepository>();
