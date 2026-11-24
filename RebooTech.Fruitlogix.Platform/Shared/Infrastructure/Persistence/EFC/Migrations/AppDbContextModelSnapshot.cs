@@ -505,6 +505,50 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                     b.ToTable("invoices");
                 });
 
+            modelBuilder.Entity("RebooTech.Fruitlogix.Platform.PaymentManagement.Domain.Model.Aggregates.Membership", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ActivatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("activated_at");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("GatewayRef")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("gateway_ref");
+
+                    b.Property<string>("Plan")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)")
+                        .HasColumnName("plan");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_memberships");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("i_x_memberships_user_id");
+
+                    b.ToTable("memberships");
+                });
+
             modelBuilder.Entity("RebooTech.Fruitlogix.Platform.PaymentManagement.Domain.Model.Aggregates.PaymentTransaction", b =>
                 {
                     b.Property<int>("Id")
@@ -581,7 +625,7 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("legal_name");
 
-                    b.Property<DateOnly?>("OperationsStartDate")
+                    b.Property<DateTime?>("OperationsStartDate")
                         .HasColumnType("date")
                         .HasColumnName("operations_start_date");
 

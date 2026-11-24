@@ -38,7 +38,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             .HasConversion(
                 v => v.HasValue ? v.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null, // Al guardar en BD
                 v => v.HasValue ? DateOnly.FromDateTime(v.Value) : (DateOnly?)null         // Al leer de BD
-            );
+            )
+            .HasColumnType("date");
 
         // Order Management
         builder.Entity<Order>().HasKey(o => o.Id);
