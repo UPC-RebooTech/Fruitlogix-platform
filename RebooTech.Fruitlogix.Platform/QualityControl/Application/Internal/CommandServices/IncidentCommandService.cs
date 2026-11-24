@@ -40,4 +40,14 @@ public class IncidentCommandService(
     }
     
     
+
+    public async Task<Incident?> Handle(AddIncidentEvidenceCommand command)
+    {
+        var incident = await incidentRepository.FindByIdAsync(command.IncidentId);
+        if (incident is null) return null;
+        incident.AddEvidenceUrls(command.EvidenceUrls);
+        incidentRepository.Update(incident);
+        await unitOfWork.CompleteAsync();
+        return incident;
+    }
 }

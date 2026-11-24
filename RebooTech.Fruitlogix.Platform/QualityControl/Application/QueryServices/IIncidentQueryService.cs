@@ -6,4 +6,5 @@ namespace RebooTech.Fruitlogix.Platform.QualityControl.Application.QueryServices
 public interface IIncidentQueryService
 {
     Task<IEnumerable<Incident>> Handle(GetAllIncidentsQuery query);
+    Task<Incident?> Handle(GetIncidentByIdQuery query);
 }

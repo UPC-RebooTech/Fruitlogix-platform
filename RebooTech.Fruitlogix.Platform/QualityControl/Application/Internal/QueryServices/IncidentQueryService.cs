@@ -11,4 +11,7 @@ public class IncidentQueryService(
 {
     public async Task<IEnumerable<Incident>> Handle(GetAllIncidentsQuery query) =>
         await incidentRepository.ListAsync();
+
+    public async Task<Incident?> Handle(GetIncidentByIdQuery query) =>
+        await incidentRepository.FindByIdAsync(query.IncidentId);
 }

@@ -7,4 +7,5 @@ public interface IIncidentCommandService
 {
     Task<Incident> Handle(CreateIncidentCommand command);
     Task<Incident?> Handle(UpdateIncidentStatusCommand command);  // ← nuevo
+    Task<Incident?> Handle(AddIncidentEvidenceCommand command);
 }
