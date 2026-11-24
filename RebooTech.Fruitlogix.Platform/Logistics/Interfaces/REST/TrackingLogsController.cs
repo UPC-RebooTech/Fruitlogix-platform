@@ -8,6 +8,7 @@ using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Queries;
 using RebooTech.Fruitlogix.Platform.Logistics.Interfaces.REST.Resources;
 using RebooTech.Fruitlogix.Platform.Logistics.Interfaces.REST.Transform;
 using RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Geofencing;
 
 namespace RebooTech.Fruitlogix.Platform.Logistics.Interfaces.REST;
 
@@ -20,12 +21,15 @@ public class TrackingLogsController : ControllerBase
     private readonly ITrackingLogCommandService _trackingLogCommandService;
     private readonly ITrackingLogQueryService   _trackingLogQueryService;
     private readonly IAccessScopeService        _accessScope;
+    private readonly IWarehouseGeofenceService  _geofence;
 
     public TrackingLogsController(
         ITrackingLogCommandService trackingLogCommandService,
         ITrackingLogQueryService   trackingLogQueryService,
-        IAccessScopeService        accessScope)
+        IAccessScopeService        accessScope,
+        IWarehouseGeofenceService  geofence)
     {
+        _geofence                  = geofence;
         _accessScope               = accessScope;
         _trackingLogCommandService = trackingLogCommandService;
         _trackingLogQueryService   = trackingLogQueryService;
@@ -53,6 +57,8 @@ public class TrackingLogsController : ControllerBase
 
         var command = CreateTrackingLogCommandFromResourceAssembler.ToCommandFromResource(resource);
         var log     = await _trackingLogCommandService.Handle(command);
+        // Geocerca del almacén: si la lectura cae dentro del radio, la entrega pasa a Arrived.
+        await _geofence.CheckArrivalAsync(resource.DeliveryId, resource.Latitude, resource.Longitude);
         var result  = TrackingLogResourceFromEntityAssembler.ToResourceFromEntity(log);
         return CreatedAtAction(nameof(CreateTrackingLog), new { id = result.Id }, result);
     }

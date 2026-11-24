@@ -16,6 +16,17 @@ public record DeliveryEventResource(
     int? CreatedByUserId
 );
 
+/// <summary>Llegada registrada. source: Geofence (detectada por el almacén del cliente) o Manual (POST arrive).</summary>
+public record DeliveryArrivalResource(
+    int DeliveryId,
+    int OrderId,
+    DateTimeOffset ArrivedAt,
+    double? Latitude,
+    double? Longitude,
+    string Source,
+    string? Note
+);
+
 /// <summary>Body opcional de POST /deliveries/{id}/arrive.</summary>
 public record ArriveDeliveryResource(double? Latitude = null, double? Longitude = null, string? Note = null);
 

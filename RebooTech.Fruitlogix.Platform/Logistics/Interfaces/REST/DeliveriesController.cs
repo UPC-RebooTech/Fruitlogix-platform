@@ -205,6 +205,31 @@ public class DeliveriesController : ControllerBase
             DeliveryEventResourceFromEntityAssembler.ToResourceFromEntity(checkpoint));
     }
 
+    /// <summary>Llegadas de las entregas visibles (geocerca o manuales), más recientes primero.</summary>
+    [HttpGet("arrivals")]
+    [ProducesResponseType(typeof(IEnumerable<DeliveryArrivalResource>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetArrivals([FromQuery] DateTimeOffset? since)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+
+        var visible = await _accessScope.GetVisibleDeliveryIdsAsync(me);
+        var arrivals = (await _deliveryQueryService.Handle(new GetDeliveryArrivalsQuery(since)))
+            .WhereVisible(visible, e => e.DeliveryId)
+            .ToList();
+        if (arrivals.Count == 0) return Ok(Array.Empty<DeliveryArrivalResource>());
+
+        var orderByDelivery = (await _deliveryQueryService.Handle(new GetAllDeliveriesQuery()))
+            .ToDictionary(d => d.Id, d => d.OrderId);
+        return Ok(arrivals.Select(e => new DeliveryArrivalResource(
+            e.DeliveryId,
+            orderByDelivery.GetValueOrDefault(e.DeliveryId),
+            e.OccurredAt,
+            e.Latitude,
+            e.Longitude,
+            e.CreatedByUserId is null ? "Geofence" : "Manual",
+            e.Note)));
+    }
+
     private async Task<bool> CanSeeDeliveryAsync(CurrentUser me, int deliveryId)
     {
         var visible = await _accessScope.GetVisibleDeliveryIdsAsync(me);

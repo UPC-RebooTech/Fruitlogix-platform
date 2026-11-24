@@ -156,6 +156,25 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             vo.WithOwner().HasForeignKey("Id");
         });
 
+        // Commercial client profile
+        builder.Entity<CommercialClient>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.Id).IsRequired().ValueGeneratedOnAdd();
+            entity.Property(c => c.UserId).IsRequired();
+            entity.HasIndex(c => c.UserId).IsUnique();
+            entity.Property(c => c.BusinessName).HasMaxLength(CommercialClient.MaxBusinessNameLength).IsRequired(false);
+            entity.Property(c => c.Ruc).HasMaxLength(CommercialClient.MaxRucLength).IsRequired(false);
+            entity.Property(c => c.ContactName).HasMaxLength(CommercialClient.MaxContactNameLength).IsRequired(false);
+            entity.Property(c => c.Email).HasMaxLength(CommercialClient.MaxEmailLength).IsRequired(false);
+            entity.Property(c => c.Phone).HasMaxLength(CommercialClient.MaxPhoneLength).IsRequired(false);
+            entity.Property(c => c.Address).HasMaxLength(CommercialClient.MaxAddressLength).IsRequired(false);
+            entity.Property(c => c.WarehouseLatitude).IsRequired(false);
+            entity.Property(c => c.WarehouseLongitude).IsRequired(false);
+            entity.Property(c => c.WarehouseRadiusKm).IsRequired(false);
+            entity.Ignore(c => c.HasWarehouse);
+        });
+
         // Quality Control
         builder.Entity<HarvestBatch>(entity =>
         {

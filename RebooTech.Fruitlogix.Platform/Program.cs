@@ -50,6 +50,7 @@ using RebooTech.Fruitlogix.Platform.Shared.Domain.Repositories;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Geofencing;
 using RebooTech.Fruitlogix.Platform.Shared.Application.Internal.OutboundServices;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.FileStorage.Cloudinary;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Interfaces.ASP.Configuration;
@@ -92,6 +93,9 @@ builder.Services.AddScoped<IOrderQueryService, OrderQueryService>();
 builder.Services.AddScoped<IProducerRepository, ProducerRepository>();
 builder.Services.AddScoped<IProducerCommandService, ProducerCommandService>();
 builder.Services.AddScoped<IProducerQueryService, ProducerQueryService>();
+builder.Services.AddScoped<ICommercialClientRepository, CommercialClientRepository>();
+builder.Services.AddScoped<ICommercialClientCommandService, CommercialClientCommandService>();
+builder.Services.AddScoped<ICommercialClientQueryService, CommercialClientQueryService>();
 
 // ── Product Catalog BC ────────────────────────────────────────────────────────
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -114,6 +118,7 @@ builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
 builder.Services.AddScoped<IDeliveryCommandService, DeliveryCommandService>();
 builder.Services.AddScoped<IDeliveryQueryService, DeliveryQueryService>();
 builder.Services.AddScoped<IDeliveryEventRepository, DeliveryEventRepository>();
+builder.Services.AddScoped<IWarehouseGeofenceService, WarehouseGeofenceService>();
 builder.Services.AddScoped<ITrackingLogRepository, TrackingLogRepository>();
 builder.Services.AddScoped<ITrackingLogCommandService, TrackingLogCommandService>();
 builder.Services.AddScoped<ITrackingLogQueryService, TrackingLogQueryService>();

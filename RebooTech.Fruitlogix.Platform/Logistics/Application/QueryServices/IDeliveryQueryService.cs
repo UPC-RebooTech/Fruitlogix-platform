@@ -10,4 +10,5 @@ public interface IDeliveryQueryService
     Task<Delivery?> Handle(GetDeliveryByIdQuery query);
     Task<IEnumerable<Delivery>> Handle(GetDeliveriesByOrderIdQuery query);
     Task<IEnumerable<DeliveryEvent>> Handle(GetDeliveryEventsQuery query);
+    Task<IEnumerable<DeliveryEvent>> Handle(GetDeliveryArrivalsQuery query);
 }

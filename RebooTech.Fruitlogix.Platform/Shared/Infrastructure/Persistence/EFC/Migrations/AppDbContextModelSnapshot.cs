@@ -774,6 +774,77 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                     b.ToTable("products");
                 });
 
+            modelBuilder.Entity("RebooTech.Fruitlogix.Platform.Profiles.Domain.Model.Aggregates.CommercialClient", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("address");
+
+                    b.Property<string>("BusinessName")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)")
+                        .HasColumnName("business_name");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("contact_name");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("Ruc")
+                        .HasMaxLength(11)
+                        .HasColumnType("varchar(11)")
+                        .HasColumnName("ruc");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("user_id");
+
+                    b.Property<double?>("WarehouseLatitude")
+                        .HasColumnType("double")
+                        .HasColumnName("warehouse_latitude");
+
+                    b.Property<double?>("WarehouseLongitude")
+                        .HasColumnType("double")
+                        .HasColumnName("warehouse_longitude");
+
+                    b.Property<double?>("WarehouseRadiusKm")
+                        .HasColumnType("double")
+                        .HasColumnName("warehouse_radius_km");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_commercial_clients");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("i_x_commercial_clients_user_id");
+
+                    b.ToTable("commercial_clients");
+                });
+
             modelBuilder.Entity("RebooTech.Fruitlogix.Platform.Profiles.Domain.Model.Aggregates.Producer", b =>
                 {
                     b.Property<int>("Id")
