@@ -24,7 +24,8 @@ public static class QualityInspectionResourceAssembler
             resource.DryCleaningDone,
             resource.CaliberSortingConfirmed,
             resource.PackagingMaterialInspected,
-            resource.FinalBoxSealing
+            resource.FinalBoxSealing,
+            InspectorName: resource.InspectorName
         );
 
     public static QualityInspectionResource ToResourceFromEntity(QualityInspection entity) =>
@@ -48,6 +49,9 @@ public static class QualityInspectionResourceAssembler
                 entity.PreparationChecklist.DryCleaningDone,
                 entity.PreparationChecklist.CaliberSortingConfirmed,
                 entity.PreparationChecklist.PackagingMaterialInspected,
-                entity.PreparationChecklist.FinalBoxSealing)
+                entity.PreparationChecklist.FinalBoxSealing),
+            entity.InspectorUserId,
+            entity.InspectorName,
+            entity.CreatedAt
         );
 }

@@ -21,7 +21,9 @@ public class InvoicesController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateInvoice([FromBody] CreateInvoiceResource resource)
     {
-        var command = CreateInvoiceCommandFromResourceAssembler.ToCommandFromResource(resource);
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        var command = CreateInvoiceCommandFromResourceAssembler.ToCommandFromResource(resource)
+            with { IssuedByUserId = me.Id };
         var invoice = await invoiceCommandService.Handle(command);
         if (invoice is null) return BadRequest();
         var invoiceResource = InvoiceResourceFromEntityAssembler.ToResourceFromEntity(invoice);

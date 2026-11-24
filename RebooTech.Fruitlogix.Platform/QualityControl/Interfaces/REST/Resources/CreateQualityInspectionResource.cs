@@ -16,5 +16,6 @@ public record CreateQualityInspectionResource(
     bool DryCleaningDone,
     bool CaliberSortingConfirmed,
     bool PackagingMaterialInspected,
-    bool FinalBoxSealing
+    bool FinalBoxSealing,
+    string? InspectorName = null
 );

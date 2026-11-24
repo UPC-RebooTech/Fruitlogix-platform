@@ -6,5 +6,6 @@ public record CreateInvoiceCommand(
     decimal Amount,
     string Currency,
     DateOnly DueDate,
-    string InvoiceType
+    string InvoiceType,
+    int? IssuedByUserId = null
 );

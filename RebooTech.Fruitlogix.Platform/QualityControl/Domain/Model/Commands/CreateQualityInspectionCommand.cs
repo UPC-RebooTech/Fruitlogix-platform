@@ -22,5 +22,9 @@ public record CreateQualityInspectionCommand(
     bool DryCleaningDone,
     bool CaliberSortingConfirmed,
     bool PackagingMaterialInspected,
-    bool FinalBoxSealing
+    bool FinalBoxSealing,
+
+    // Inspector (lo llena el controller con el usuario del JWT)
+    int? InspectorUserId = null,
+    string? InspectorName = null
 );

@@ -583,6 +583,10 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("issued_at");
 
+                    b.Property<int?>("IssuedByUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("issued_by_user_id");
+
                     b.Property<int?>("OrderId")
                         .HasColumnType("int")
                         .HasColumnName("order_id");
@@ -1043,6 +1047,15 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("longtext")
                         .HasColumnName("created_by");
+
+                    b.Property<string>("InspectorName")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("inspector_name");
+
+                    b.Property<int?>("InspectorUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("inspector_user_id");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)

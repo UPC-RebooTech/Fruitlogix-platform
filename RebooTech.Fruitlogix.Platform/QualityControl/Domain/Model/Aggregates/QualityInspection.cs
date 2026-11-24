@@ -20,6 +20,22 @@ public class QualityInspection : IAuditableEntity
     public string? CreatedBy { get; set; }
     public string? UpdatedBy { get; set; }
 
+    /// <summary>Usuario IAM que registró la inspección (null en datos antiguos).</summary>
+    public int? InspectorUserId { get; private set; }
+    /// <summary>Nombre del inspector; por defecto el username de quien la registra.</summary>
+    public string? InspectorName { get; private set; }
+
+    public const int MaxInspectorNameLength = 100;
+
+    public void SetInspector(int? userId, string? name)
+    {
+        var trimmed = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+        if (trimmed is { Length: > MaxInspectorNameLength })
+            throw new ArgumentException($"Inspector name cannot exceed {MaxInspectorNameLength} characters.", nameof(name));
+        InspectorUserId = userId;
+        InspectorName = trimmed;
+    }
+
     public QualityInspection() { }
 
     public QualityInspection(

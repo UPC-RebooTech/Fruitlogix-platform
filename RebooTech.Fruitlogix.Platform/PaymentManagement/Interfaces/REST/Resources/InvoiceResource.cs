@@ -13,5 +13,6 @@ public record InvoiceResource(
     string Status,
     string InvoiceType,
     DateTimeOffset? IssuedAt,
-    DateTimeOffset? PaidAt
+    DateTimeOffset? PaidAt,
+    int? IssuedByUserId
 );

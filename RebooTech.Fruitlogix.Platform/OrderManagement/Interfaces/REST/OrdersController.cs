@@ -4,6 +4,7 @@ using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Commands;
 using RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest;
 using RebooTech.Fruitlogix.Platform.Iam.Interfaces.Rest;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Traceability;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Application.CommandServices;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Application.QueryServices;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.Commands;
@@ -32,7 +33,8 @@ public class OrdersController(
     IDeliveryCommandService deliveryCommandService,
     IProducerQueryService producerQueryService,
     IHarvestBatchQueryService harvestBatchQueryService,
-    IProductQueryService productQueryService) : ControllerBase
+    IProductQueryService productQueryService,
+    IOrderTraceabilityService traceabilityService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType(400)]
@@ -198,6 +200,23 @@ public class OrdersController(
         return Ok(await ToResourceAsync(order));
     }
     
+    /// <summary>
+    ///     Trazabilidad del pedido (US72): cosecha, inspección, despacho, recepción y factura,
+    ///     cada etapa con fecha, responsable y estado (Completed, Pending o NotApplicable).
+    /// </summary>
+    [HttpGet("{orderId:int}/traceability")]
+    [ProducesResponseType(typeof(OrderTraceabilityResource), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetOrderTraceability(int orderId)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (!await CanAccessOrderAsync(me, orderId)) return NotFound($"Order with id {orderId} not found.");
+
+        var traceability = await traceabilityService.GetAsync(orderId);
+        if (traceability is null) return NotFound($"Order with id {orderId} not found.");
+        return Ok(traceability);
+    }
+
     /// <summary>Recepción confirmada del pedido (calificación, comentario, sello y temperatura).</summary>
     [HttpGet("{orderId:int}/reception")]
     [ProducesResponseType(typeof(OrderReceptionResource), 200)]

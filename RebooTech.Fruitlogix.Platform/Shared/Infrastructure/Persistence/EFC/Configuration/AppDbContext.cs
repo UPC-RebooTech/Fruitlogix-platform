@@ -193,6 +193,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         {
             entity.HasKey(q => q.Id);
             entity.Property(q => q.Notes).HasMaxLength(500);
+            entity.Property(q => q.InspectorUserId).IsRequired(false);
+            entity.Property(q => q.InspectorName).HasMaxLength(QualityInspection.MaxInspectorNameLength).IsRequired(false);
 
             entity.HasOne(q => q.VisualInspection)
                 .WithOne()
@@ -352,6 +354,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<Invoice>().Property(i => i.InvoiceType).HasConversion<string>().IsRequired();
         builder.Entity<Invoice>().Property(i => i.IssuedAt).IsRequired(false);
         builder.Entity<Invoice>().Property(i => i.PaidAt).IsRequired(false);
+        builder.Entity<Invoice>().Property(i => i.IssuedByUserId).IsRequired(false);
         
         builder.Entity<PaymentTransaction>().HasKey(t => t.Id);
         builder.Entity<PaymentTransaction>().Property(t => t.Id).IsRequired().ValueGeneratedOnAdd();

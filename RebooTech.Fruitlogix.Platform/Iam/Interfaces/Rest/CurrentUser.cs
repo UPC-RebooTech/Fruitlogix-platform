@@ -9,7 +9,7 @@ namespace RebooTech.Fruitlogix.Platform.Iam.Interfaces.Rest;
 ///     <c>RequestAuthorizationMiddleware</c> (HttpContext.Items["User"]).
 ///     Úsalo para autorizar: nunca confíes en ids de la URL sin compararlos con este.
 /// </summary>
-public sealed record CurrentUser(int Id, UserRole Role)
+public sealed record CurrentUser(int Id, UserRole Role, string Username = "")
 {
     public bool IsAdmin => Role == UserRole.Admin;
     public bool IsCommercialClient => Role == UserRole.CommercialClient;
@@ -20,7 +20,7 @@ public sealed record CurrentUser(int Id, UserRole Role)
     public bool IsSelfOrAdmin(int userId) => IsAdmin || Id == userId;
 
     public static CurrentUser? From(HttpContext httpContext) =>
-        httpContext.Items["User"] is IamUser user ? new CurrentUser(user.Id, user.Role) : null;
+        httpContext.Items["User"] is IamUser user ? new CurrentUser(user.Id, user.Role, user.Username) : null;
 }
 
 public static class CurrentUserControllerExtensions

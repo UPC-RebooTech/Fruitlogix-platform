@@ -51,6 +51,7 @@ using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Config
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Geofencing;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Traceability;
 using RebooTech.Fruitlogix.Platform.Shared.Application.Internal.OutboundServices;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.FileStorage.Cloudinary;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Interfaces.ASP.Configuration;
@@ -81,6 +82,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAccessScopeService, AccessScopeService>();
 builder.Services.AddScoped<IOrderDependencyService, OrderDependencyService>();
+builder.Services.AddScoped<IOrderTraceabilityService, OrderTraceabilityService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddSingleton<IFileStorageService, CloudinaryFileStorageService>();
 builder.Services.AddSingleton<RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest.ProblemDetails.ProblemDetailsFactory>();

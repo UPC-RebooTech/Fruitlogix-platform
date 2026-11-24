@@ -34,6 +34,7 @@ public class QualityInspectionCommandService(
             command.FinalBoxSealing
         );
 
+        inspection.SetInspector(command.InspectorUserId, command.InspectorName);
         await qualityInspectionRepository.AddAsync(inspection);
         await unitOfWork.CompleteAsync();   // 1er save: QualityInspection obtiene su Id
 

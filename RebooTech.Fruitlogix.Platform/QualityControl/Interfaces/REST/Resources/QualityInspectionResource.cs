@@ -29,5 +29,8 @@ public record QualityInspectionResource(
     string? Notes,
     VisualInspectionResource VisualInspection,
     TechnicalParametersResource TechnicalParameters,
-    PreparationChecklistResource PreparationChecklist
+    PreparationChecklistResource PreparationChecklist,
+    int? InspectorUserId,
+    string? InspectorName,
+    DateTimeOffset? CreatedAt
 );

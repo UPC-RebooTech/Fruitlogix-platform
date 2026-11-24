@@ -15,6 +15,8 @@ public class Invoice : IAuditableEntity
     public InvoiceType InvoiceType { get; private set; }
     public DateTimeOffset? IssuedAt { get; private set; }
     public DateTimeOffset? PaidAt { get; private set; }
+    /// <summary>Usuario IAM que emitió la factura (null en datos antiguos).</summary>
+    public int? IssuedByUserId { get; private set; }
 
     protected Invoice() { }
 
@@ -27,6 +29,7 @@ public class Invoice : IAuditableEntity
         InvoiceType = Enum.Parse<InvoiceType>(command.InvoiceType, ignoreCase: true);
         Status = InvoiceStatus.PENDING;
         IssuedAt = DateTimeOffset.UtcNow;
+        IssuedByUserId = command.IssuedByUserId;
     }
 
     public void MarkAsPaid()

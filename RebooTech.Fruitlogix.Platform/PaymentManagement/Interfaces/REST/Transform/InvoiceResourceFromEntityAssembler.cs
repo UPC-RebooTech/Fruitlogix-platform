@@ -16,6 +16,7 @@ public static class InvoiceResourceFromEntityAssembler
             entity.Status.ToString(),
             entity.InvoiceType.ToString(),
             entity.IssuedAt,
-            entity.PaidAt
+            entity.PaidAt,
+            entity.IssuedByUserId
         );
 }
