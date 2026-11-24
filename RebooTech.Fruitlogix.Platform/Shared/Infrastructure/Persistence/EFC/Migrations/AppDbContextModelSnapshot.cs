@@ -368,6 +368,10 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("int")
                         .HasColumnName("id");
 
+                    b.Property<int?>("BatchId")
+                        .HasColumnType("int")
+                        .HasColumnName("batch_id");
+
                     b.Property<string>("CancellationReason")
                         .HasColumnType("longtext")
                         .HasColumnName("cancellation_reason");
@@ -430,6 +434,9 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
 
                     b.HasKey("Id")
                         .HasName("p_k_orders");
+
+                    b.HasIndex("BatchId")
+                        .HasDatabaseName("i_x_orders_batch_id");
 
                     b.ToTable("orders");
                 });

@@ -6,7 +6,7 @@ namespace RebooTech.Fruitlogix.Platform.OrderManagement.Interfaces.REST.Transfor
 
 public static class OrderResourceFromEntityAssembler
 {
-    public static OrderResource ToResourceFromEntity(Order order) =>
+    public static OrderResource ToResourceFromEntity(Order order, string? producerName = null) =>
         new(
             order.Id,
             order.CommercialClientId,
@@ -28,7 +28,9 @@ public static class OrderResourceFromEntityAssembler
             order.UpdatedAt,
             order.DeliveredAt,
             order.DeliveredAt,
-            ToReceptionResourceFromEntity(order)
+            ToReceptionResourceFromEntity(order),
+            order.BatchId,
+            producerName
         );
 
     /// <summary>null si el pedido aún no tiene recepción confirmada.</summary>

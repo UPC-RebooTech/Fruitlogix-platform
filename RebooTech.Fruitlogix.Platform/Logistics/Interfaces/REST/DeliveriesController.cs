@@ -8,24 +8,31 @@ using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Commands;
 using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Queries;
 using RebooTech.Fruitlogix.Platform.Logistics.Interfaces.REST.Resources;
 using RebooTech.Fruitlogix.Platform.Logistics.Interfaces.REST.Transform;
+using RebooTech.Fruitlogix.Platform.OrderManagement.Application.CommandServices;
+using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.Commands;
+using RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest;
 
 namespace RebooTech.Fruitlogix.Platform.Logistics.Interfaces.REST;
 
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
+[DomainExceptionFilter]
 public class DeliveriesController : ControllerBase
 {
     private readonly IDeliveryCommandService _deliveryCommandService;
     private readonly IDeliveryQueryService   _deliveryQueryService;
     private readonly IAccessScopeService     _accessScope;
+    private readonly IOrderCommandService    _orderCommandService;
 
     public DeliveriesController(
         IDeliveryCommandService deliveryCommandService,
         IDeliveryQueryService deliveryQueryService,
-        IAccessScopeService accessScope)
+        IAccessScopeService accessScope,
+        IOrderCommandService orderCommandService)
     {
         _accessScope            = accessScope;
+        _orderCommandService    = orderCommandService;
         _deliveryCommandService = deliveryCommandService;
         _deliveryQueryService   = deliveryQueryService;
     }
@@ -68,8 +75,16 @@ public class DeliveriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> StartDispatch(int id)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (me.IsCommercialClient)
+            return StatusCode(403, new { message = "Only a distributor, the order's producer or an admin can update a delivery." });
+        var visible = await _accessScope.GetVisibleDeliveryIdsAsync(me);
+        if (visible is not null && !visible.Contains(id)) return NotFound();
+
         var command  = new StartDispatchCommand(id);
         var delivery = await _deliveryCommandService.Handle(command);
+        // El pedido acompaña a la entrega: Pending/InPreparation pasan a InTransit (requisito de la recepción).
+        await _orderCommandService.Handle(new MarkOrderDispatchedCommand(delivery.OrderId));
         return Ok(DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery));
     }
 
@@ -80,6 +95,12 @@ public class DeliveriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ReportDelay(int id, [FromBody] ReportDelayResource resource)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (me.IsCommercialClient)
+            return StatusCode(403, new { message = "Only a distributor, the order's producer or an admin can update a delivery." });
+        var visible = await _accessScope.GetVisibleDeliveryIdsAsync(me);
+        if (visible is not null && !visible.Contains(id)) return NotFound();
+
         var command  = new ReportDelayCommand(id, resource.Reason);
         var delivery = await _deliveryCommandService.Handle(command);
         return Ok(DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery));

@@ -28,6 +28,9 @@ public class Order : IAuditableEntity
     public bool? SealAndTemperatureOk { get; private set; }
     public DateTimeOffset? DeliveredAt { get; private set; }
 
+    /// <summary>Lote de cosecha vinculado al preparar el pedido (null hasta que se vincule).</summary>
+    public int? BatchId { get; private set; }
+
     private readonly List<OrderItem> _items = new();
     public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
@@ -45,13 +48,17 @@ public class Order : IAuditableEntity
         
         DeliveryDueDate = new DeliveryDate(command.DeliveryDueDate);
         DeliveryAddress = command.DeliveryAddress; // Guardamos la dirección
-        TotalAmount = command.TotalAmount;
         Notes = command.Notes;
         Status = OrderStatus.Pending;
 
-        // Llenamos la lista de frutas
+        if (command.Items is null || command.Items.Count == 0)
+            throw new ArgumentException("An order must have at least one item.");
+
+        // Subtotales y total se calculan en el servidor; los que envía el cliente se ignoran.
         foreach (var item in command.Items)
-            _items.Add(new OrderItem(item.ProductId, item.ProductName, item.QuantityKg, item.UnitPrice, item.Subtotal));
+            _items.Add(new OrderItem(item.ProductId, item.ProductName, item.QuantityKg, item.UnitPrice,
+                CalculateSubtotal(item.QuantityKg, item.UnitPrice)));
+        TotalAmount = _items.Sum(i => i.Subtotal);
     }
 
     public void AssignProducer(AssignProducerCommand command)
@@ -71,7 +78,7 @@ public class Order : IAuditableEntity
         // También quitamos FruitType y TotalVolume de aquí
         DeliveryDueDate = new DeliveryDate(command.DeliveryDueDate);
         DeliveryAddress = command.DeliveryAddress;
-        TotalAmount = command.TotalAmount;
+        // TotalAmount no se actualiza: siempre es la suma de los subtotales de los ítems.
         Notes = command.Notes;
     }
 
@@ -105,6 +112,30 @@ public class Order : IAuditableEntity
         Status = OrderStatus.Rejected;
     }
     
+    /// <summary>Subtotal = cantidad (kg) × precio unitario, redondeado a 2 decimales.</summary>
+    public static decimal CalculateSubtotal(double quantityKg, decimal unitPrice) =>
+        Math.Round((decimal)quantityKg * unitPrice, 2, MidpointRounding.AwayFromZero);
+
+    public void AssignBatch(int batchId)
+    {
+        if (batchId <= 0)
+            throw new ArgumentException("BatchId must be a positive integer.");
+        if (Status is not (OrderStatus.Pending or OrderStatus.InPreparation))
+            throw new InvalidOperationException("A batch can only be linked to pending or in-preparation orders.");
+        BatchId = batchId;
+    }
+
+    /// <summary>
+    ///     El despacho de la entrega comenzó: Pending o InPreparation pasan a InTransit.
+    ///     En otro estado no cambia nada y devuelve false.
+    /// </summary>
+    public bool MarkDispatched()
+    {
+        if (Status is not (OrderStatus.Pending or OrderStatus.InPreparation)) return false;
+        Status = OrderStatus.InTransit;
+        return true;
+    }
+
     public const int MaxReceptionCommentLength = 500;
 
     public void ConfirmReception(int? rating, string? comment, bool hasIncidence, bool? sealAndTemperatureOk = null)

@@ -10,6 +10,12 @@ using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.Commands;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.Queries;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Interfaces.REST.Resources;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Interfaces.REST.Transform;
+using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.Aggregates;
+using RebooTech.Fruitlogix.Platform.Profiles.Application.QueryServices;
+using RebooTech.Fruitlogix.Platform.Profiles.Domain.Model.Queries;
+using RebooTech.Fruitlogix.Platform.QualityControl.Application.QueryServices;
+using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Queries;
+using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.ValueObjects;
 
 namespace RebooTech.Fruitlogix.Platform.OrderManagement.Interfaces.REST;
 
@@ -21,17 +27,22 @@ public class OrdersController(
     IOrderQueryService orderQueryService,
     IAccessScopeService accessScope,
     IOrderDependencyService orderDependencies,
-    IDeliveryCommandService deliveryCommandService) : ControllerBase
+    IDeliveryCommandService deliveryCommandService,
+    IProducerQueryService producerQueryService,
+    IHarvestBatchQueryService harvestBatchQueryService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType(201)]
     [ProducesResponseType(400)]
     public async Task<IActionResult> Create([FromBody] CreateOrderResource resource)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
         var command = CreateOrderCommandFromResourceAssembler.ToCommandFromResource(resource);
+        // Un cliente solo crea pedidos a su nombre: se ignora el commercialClientId del body.
+        if (me.IsCommercialClient) command = command with { CommercialClientId = me.Id };
         var order = await orderCommandService.Handle(command);
         if (order is null) return BadRequest();
-        var orderResource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
+        var orderResource = await ToResourceAsync(order);
         return StatusCode(201, orderResource);
     }
 
@@ -42,7 +53,7 @@ public class OrdersController(
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
         var orders = await orderQueryService.Handle(new GetAllOrdersQuery());
         var visible = await accessScope.GetVisibleOrderIdsAsync(me);
-        var resources = orders.WhereVisible(visible, o => o.Id).Select(OrderResourceFromEntityAssembler.ToResourceFromEntity);
+        var resources = await ToResourcesAsync(orders.WhereVisible(visible, o => o.Id));
         return Ok(resources);
     }
 
@@ -56,7 +67,7 @@ public class OrdersController(
         if (order is null) return NotFound();
         var visible = await accessScope.GetVisibleOrderIdsAsync(me);
         if (visible is not null && !visible.Contains(order.Id)) return NotFound();
-        return Ok(OrderResourceFromEntityAssembler.ToResourceFromEntity(order));
+        return Ok(await ToResourceAsync(order));
     }
 
     [HttpGet("client/{clientId:int}")]
@@ -66,7 +77,7 @@ public class OrdersController(
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
         var orders = await orderQueryService.Handle(new GetOrdersByClientIdQuery(clientId));
         var visible = await accessScope.GetVisibleOrderIdsAsync(me);
-        var resources = orders.WhereVisible(visible, o => o.Id).Select(OrderResourceFromEntityAssembler.ToResourceFromEntity);
+        var resources = await ToResourcesAsync(orders.WhereVisible(visible, o => o.Id));
         return Ok(resources);
     }
 
@@ -81,7 +92,7 @@ public class OrdersController(
         var command = UpdateOrderCommandFromResourceAssembler.ToCommandFromResource(id, resource);
         var order = await orderCommandService.Handle(command);
         if (order is null) return NotFound();
-        return Ok(OrderResourceFromEntityAssembler.ToResourceFromEntity(order));
+        return Ok(await ToResourceAsync(order));
     }
 
     [HttpPatch("{id:int}/assign-producer")]
@@ -97,7 +108,39 @@ public class OrdersController(
             .ToCommandFromResource(id, resource);
         var order = await orderCommandService.Handle(command);
         if (order is null) return NotFound();
-        return Ok(OrderResourceFromEntityAssembler.ToResourceFromEntity(order));
+        return Ok(await ToResourceAsync(order));
+    }
+
+    /// <summary>Vincula el lote de cosecha con el pedido (productor del pedido, Distributor o Admin).</summary>
+    [HttpPatch("{id:int}/batch")]
+    [ProducesResponseType(typeof(OrderResource), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
+    public async Task<IActionResult> AssignBatch(int id, [FromBody] AssignOrderBatchResource resource)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (!await CanAccessOrderAsync(me, id)) return NotFound();
+        if (me.IsCommercialClient)
+            return StatusCode(403, new { message = "Only the order's producer, a distributor or an admin can link a batch." });
+        if (resource?.BatchId is not > 0)
+            return BadRequest(new { message = "BatchId is required." });
+
+        var order = await orderQueryService.Handle(new GetOrderByIdQuery(id));
+        if (order is null) return NotFound();
+
+        var batch = await harvestBatchQueryService.Handle(new GetHarvestBatchByIdQuery(resource.BatchId.Value));
+        if (batch is null)
+            return NotFound(new { message = $"Harvest batch {resource.BatchId} not found." });
+        if (order.ProducerId is null || order.ProducerId.Value != batch.ProducerId)
+            return BadRequest(new { message = "The batch must belong to the producer assigned to the order." });
+        if (batch.Status == BatchStatus.Rejected)
+            return Conflict(new { message = "A rejected batch cannot be linked to an order." });
+
+        var updated = await orderCommandService.Handle(new AssignOrderBatchCommand(id, batch.Id));
+        if (updated is null) return NotFound();
+        return Ok(await ToResourceAsync(updated));
     }
 
     [HttpPatch("{id:int}/cancel")]
@@ -111,7 +154,7 @@ public class OrdersController(
         var command = new Domain.Model.Commands.CancelOrderCommand(id, resource.Reason);
         var order = await orderCommandService.Handle(command);
         if (order is null) return NotFound();
-        return Ok(OrderResourceFromEntityAssembler.ToResourceFromEntity(order));
+        return Ok(await ToResourceAsync(order));
     }
     
     [HttpPost("{orderId:int}/reception")]
@@ -133,7 +176,7 @@ public class OrdersController(
         await deliveryCommandService.Handle(new MarkDeliveriesDeliveredByOrderCommand(orderId));
 
         // Aquí sí usamos el Assembler viejo porque vamos de Entity a Resource para mostrar el resultado
-        return Ok(OrderResourceFromEntityAssembler.ToResourceFromEntity(order));
+        return Ok(await ToResourceAsync(order));
     }
     
     /// <summary>Recepción confirmada del pedido (calificación, comentario, sello y temperatura).</summary>
@@ -160,8 +203,7 @@ public class OrdersController(
         var orders = await orderQueryService.Handle(
             new GetOrdersByProducerIdQuery(producerId));
         var visible = await accessScope.GetVisibleOrderIdsAsync(me);
-        var resources = orders.WhereVisible(visible, o => o.Id).Select(
-            OrderResourceFromEntityAssembler.ToResourceFromEntity);
+        var resources = await ToResourcesAsync(orders.WhereVisible(visible, o => o.Id));
         return Ok(resources);
     }
     /// <summary>
@@ -208,5 +250,29 @@ public class OrdersController(
     {
         var visible = await accessScope.GetVisibleOrderIdsAsync(me);
         return visible is null || visible.Contains(orderId);
+    }
+
+    private static string ProducerDisplayName(Profiles.Domain.Model.Aggregates.Producer producer) =>
+        string.IsNullOrWhiteSpace(producer.FullName) ? producer.LegalName : producer.FullName;
+
+    private async Task<OrderResource> ToResourceAsync(Order order)
+    {
+        string? producerName = null;
+        if (order.ProducerId is not null)
+        {
+            var producer = await producerQueryService.Handle(new GetProducerByIdQuery(order.ProducerId.Value));
+            if (producer is not null) producerName = ProducerDisplayName(producer);
+        }
+        return OrderResourceFromEntityAssembler.ToResourceFromEntity(order, producerName);
+    }
+
+    private async Task<List<OrderResource>> ToResourcesAsync(IEnumerable<Order> orders)
+    {
+        var list = orders.ToList();
+        if (list.Count == 0) return [];
+        var names = (await producerQueryService.Handle(new GetAllProducersQuery()))
+            .ToDictionary(p => p.Id, ProducerDisplayName);
+        return list.Select(o => OrderResourceFromEntityAssembler.ToResourceFromEntity(o,
+            o.ProducerId is not null && names.TryGetValue(o.ProducerId.Value, out var name) ? name : null)).ToList();
     }
 }

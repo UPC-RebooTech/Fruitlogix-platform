@@ -6,4 +6,5 @@ namespace RebooTech.Fruitlogix.Platform.QualityControl.Application.QueryServices
 public interface IHarvestBatchQueryService
 {
     Task<IEnumerable<HarvestBatch>> Handle(GetAllHarvestBatchesQuery query);
+    Task<HarvestBatch?> Handle(GetHarvestBatchByIdQuery query);
 }

@@ -67,6 +67,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             .HasMaxLength(Order.MaxReceptionCommentLength).IsRequired(false);
         builder.Entity<Order>().Property(o => o.SealAndTemperatureOk).IsRequired(false);
         builder.Entity<Order>().Property(o => o.DeliveredAt).IsRequired(false);
+        builder.Entity<Order>().Property(o => o.BatchId).IsRequired(false);
+        builder.Entity<Order>().HasIndex(o => o.BatchId);
         builder.Entity<Order>()
             .Property(o => o.ProducerId)
             .HasConversion(

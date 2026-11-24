@@ -11,4 +11,7 @@ public class HarvestBatchQueryService(
 {
     public async Task<IEnumerable<HarvestBatch>> Handle(GetAllHarvestBatchesQuery query) =>
         await harvestBatchRepository.ListAsync();
+
+    public async Task<HarvestBatch?> Handle(GetHarvestBatchByIdQuery query) =>
+        await harvestBatchRepository.FindByIdAsync(query.BatchId);
 }

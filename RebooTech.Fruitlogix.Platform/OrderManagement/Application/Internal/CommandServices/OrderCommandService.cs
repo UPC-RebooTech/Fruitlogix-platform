@@ -20,7 +20,7 @@ public class OrderCommandService(
 
     public async Task<Order?> Handle(UpdateOrderCommand command)
     {
-        var order = await orderRepository.FindByIdAsync(command.OrderId);
+        var order = await orderRepository.GetOrderByIdWithItemsAsync(command.OrderId);
         if (order is null) return null;
         order.UpdateDetails(command);
         orderRepository.Update(order);
@@ -30,7 +30,7 @@ public class OrderCommandService(
 
     public async Task<Order?> Handle(AssignProducerCommand command)
     {
-        var order = await orderRepository.FindByIdAsync(command.OrderId);
+        var order = await orderRepository.GetOrderByIdWithItemsAsync(command.OrderId);
         if (order is null) return null;
         order.AssignProducer(command);
         orderRepository.Update(order);
@@ -40,7 +40,7 @@ public class OrderCommandService(
 
     public async Task<Order?> Handle(CancelOrderCommand command)
     {
-        var order = await orderRepository.FindByIdAsync(command.OrderId);
+        var order = await orderRepository.GetOrderByIdWithItemsAsync(command.OrderId);
         if (order is null) return null;
         order.Cancel(command);
         orderRepository.Update(order);
@@ -50,7 +50,7 @@ public class OrderCommandService(
     
     public async Task<Order?> Handle(ConfirmOrderReceptionCommand command)
     {
-        var order = await orderRepository.FindByIdAsync(command.OrderId);
+        var order = await orderRepository.GetOrderByIdWithItemsAsync(command.OrderId);
         if (order is null) return null;
 
         order.ConfirmReception(command.Rating, command.Comment, command.HasIncidence, command.SealAndTemperatureOk);
@@ -61,12 +61,34 @@ public class OrderCommandService(
     }
     public async Task Handle(DeleteOrderCommand command)
     {
-        var order = await orderRepository.FindByIdAsync(command.OrderId);
+        var order = await orderRepository.GetOrderByIdWithItemsAsync(command.OrderId);
     
         if (order == null)
             throw new KeyNotFoundException("Order not found.");
 
         orderRepository.Remove(order);
         await unitOfWork.CompleteAsync();
+    }
+
+    public async Task<Order?> Handle(AssignOrderBatchCommand command)
+    {
+        var order = await orderRepository.GetOrderByIdWithItemsAsync(command.OrderId);
+        if (order is null) return null;
+        order.AssignBatch(command.BatchId);
+        orderRepository.Update(order);
+        await unitOfWork.CompleteAsync();
+        return order;
+    }
+
+    public async Task<Order?> Handle(MarkOrderDispatchedCommand command)
+    {
+        var order = await orderRepository.GetOrderByIdWithItemsAsync(command.OrderId);
+        if (order is null) return null;
+        if (order.MarkDispatched())
+        {
+            orderRepository.Update(order);
+            await unitOfWork.CompleteAsync();
+        }
+        return order;
     }
 }

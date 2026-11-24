@@ -16,5 +16,7 @@ public record OrderResource(
     DateTimeOffset? DeliveredAt,
     // Alias de DeliveredAt (la app acepta cualquiera de los dos).
     DateTimeOffset? ReceivedAt,
-    OrderReceptionResource? Reception
+    OrderReceptionResource? Reception,
+    int? BatchId,
+    string? ProducerName
 );
