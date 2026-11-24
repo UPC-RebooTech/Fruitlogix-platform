@@ -380,6 +380,10 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTimeOffset?>("DeliveredAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("delivered_at");
+
                     b.Property<string>("DeliveryAddress")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -397,6 +401,19 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                     b.Property<int?>("ProducerId")
                         .HasColumnType("int")
                         .HasColumnName("producer_id");
+
+                    b.Property<string>("ReceptionComment")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("reception_comment");
+
+                    b.Property<int?>("ReceptionRating")
+                        .HasColumnType("int")
+                        .HasColumnName("reception_rating");
+
+                    b.Property<bool?>("SealAndTemperatureOk")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("seal_and_temperature_ok");
 
                     b.Property<string>("Status")
                         .IsRequired()

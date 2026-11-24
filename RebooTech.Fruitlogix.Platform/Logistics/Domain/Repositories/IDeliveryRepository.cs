@@ -5,4 +5,5 @@ namespace RebooTech.Fruitlogix.Platform.Logistics.Domain.Repositories;
 
 public interface IDeliveryRepository : IBaseRepository<Delivery>
 {
+    Task<IEnumerable<Delivery>> FindByOrderIdAsync(int orderId);
 }

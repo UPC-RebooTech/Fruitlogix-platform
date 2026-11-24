@@ -62,6 +62,11 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             .IsRequired(false);
         builder.Entity<Order>().Property(o => o.CancellationReason)
             .IsRequired(false);
+        builder.Entity<Order>().Property(o => o.ReceptionRating).IsRequired(false);
+        builder.Entity<Order>().Property(o => o.ReceptionComment)
+            .HasMaxLength(Order.MaxReceptionCommentLength).IsRequired(false);
+        builder.Entity<Order>().Property(o => o.SealAndTemperatureOk).IsRequired(false);
+        builder.Entity<Order>().Property(o => o.DeliveredAt).IsRequired(false);
         builder.Entity<Order>()
             .Property(o => o.ProducerId)
             .HasConversion(

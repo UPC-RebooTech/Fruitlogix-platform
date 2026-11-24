@@ -8,4 +8,6 @@ public interface IDeliveryCommandService
     Task<Delivery> Handle(CreateDeliveryCommand command);
     Task<Delivery> Handle(StartDispatchCommand command);
     Task<Delivery> Handle(ReportDelayCommand command);
+    /// <summary>Devuelve cuántas entregas cambiaron a Delivered.</summary>
+    Task<int> Handle(MarkDeliveriesDeliveredByOrderCommand command);
 }

@@ -1,4 +1,5 @@
 using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.Aggregates;
+using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.ValueObjects;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Interfaces.REST.Resources;
 
 namespace RebooTech.Fruitlogix.Platform.OrderManagement.Interfaces.REST.Transform;
@@ -24,6 +25,21 @@ public static class OrderResourceFromEntityAssembler
                 i.UnitPrice,
                 i.Subtotal)).ToList(),
             order.CreatedAt,
-            order.UpdatedAt
+            order.UpdatedAt,
+            order.DeliveredAt,
+            order.DeliveredAt,
+            ToReceptionResourceFromEntity(order)
         );
+
+    /// <summary>null si el pedido aún no tiene recepción confirmada.</summary>
+    public static OrderReceptionResource? ToReceptionResourceFromEntity(Order order) =>
+        order.DeliveredAt is null
+            ? null
+            : new OrderReceptionResource(
+                order.Id,
+                order.ReceptionRating,
+                order.ReceptionComment,
+                order.Status == OrderStatus.DeliveredWithIncidence,
+                order.SealAndTemperatureOk,
+                order.DeliveredAt);
 }

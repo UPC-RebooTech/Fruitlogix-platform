@@ -22,6 +22,12 @@ public class Order : IAuditableEntity
     public string? Notes { get; private set; }
     public string? CancellationReason { get; private set; }
 
+    // --- Recepción (US35): null hasta que el cliente confirma ---
+    public int? ReceptionRating { get; private set; }
+    public string? ReceptionComment { get; private set; }
+    public bool? SealAndTemperatureOk { get; private set; }
+    public DateTimeOffset? DeliveredAt { get; private set; }
+
     private readonly List<OrderItem> _items = new();
     public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
 
@@ -99,16 +105,27 @@ public class Order : IAuditableEntity
         Status = OrderStatus.Rejected;
     }
     
-    public void ConfirmReception(int rating, string comment, bool hasIncidence)
+    public const int MaxReceptionCommentLength = 500;
+
+    public void ConfirmReception(int? rating, string? comment, bool hasIncidence, bool? sealAndTemperatureOk = null)
     {
         if (Status != OrderStatus.InTransit)
             throw new InvalidOperationException("Order must be in transit to confirm reception.");
 
-        if (rating < 1 || rating > 5)
-            throw new ArgumentOutOfRangeException(nameof(rating), "Rating must be between 1 and 5.");
+        // 0 o null = sin calificar (la app envía 0 cuando el cliente no califica).
+        int? normalizedRating = rating is null or 0 ? null : rating;
+        if (normalizedRating is < 1 or > 5)
+            throw new ArgumentOutOfRangeException(nameof(rating), "Rating must be between 1 and 5, or 0/null when not rated.");
+
+        var trimmedComment = string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+        if (trimmedComment is { Length: > MaxReceptionCommentLength })
+            throw new ArgumentException($"Comment cannot exceed {MaxReceptionCommentLength} characters.", nameof(comment));
 
         Status = hasIncidence ? OrderStatus.DeliveredWithIncidence : OrderStatus.Delivered;
-        Notes = $"[Rating: {rating}/5] {comment}";
+        ReceptionRating = normalizedRating;
+        ReceptionComment = trimmedComment;
+        SealAndTemperatureOk = sealAndTemperatureOk;
+        DeliveredAt = DateTimeOffset.UtcNow;
     }
     
 }

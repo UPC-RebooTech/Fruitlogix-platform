@@ -2,7 +2,8 @@
 
 public record ConfirmOrderReceptionCommand(
     int OrderId,
-    int Rating,
-    string Comment,
-    bool HasIncidence
+    int? Rating,
+    string? Comment,
+    bool HasIncidence,
+    bool? SealAndTemperatureOk = null
 );

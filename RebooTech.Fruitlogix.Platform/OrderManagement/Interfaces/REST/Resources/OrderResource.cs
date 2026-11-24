@@ -12,5 +12,9 @@ public record OrderResource(
     string? CancellationReason,
     List<OrderItemResource> Items,
     DateTimeOffset? CreatedAt,
-    DateTimeOffset? UpdatedAt
+    DateTimeOffset? UpdatedAt,
+    DateTimeOffset? DeliveredAt,
+    // Alias de DeliveredAt (la app acepta cualquiera de los dos).
+    DateTimeOffset? ReceivedAt,
+    OrderReceptionResource? Reception
 );

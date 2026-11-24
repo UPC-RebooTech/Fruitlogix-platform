@@ -12,7 +12,8 @@ public static class ConfirmOrderReceptionCommandFromResourceAssembler
             orderId, 
             resource.Rating, 
             resource.Comment, 
-            resource.HasIncidence
+            resource.HasIncidence,
+            resource.SealAndTemperatureOk
         );
     }
 }

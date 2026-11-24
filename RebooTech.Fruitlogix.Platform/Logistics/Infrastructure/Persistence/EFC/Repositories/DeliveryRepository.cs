@@ -1,4 +1,5 @@
-﻿using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Aggregates;
+﻿using Microsoft.EntityFrameworkCore;
+using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.Logistics.Domain.Repositories;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
@@ -8,4 +9,7 @@ namespace RebooTech.Fruitlogix.Platform.Logistics.Infrastructure.Persistence.EFC
 public class DeliveryRepository : BaseRepository<Delivery>, IDeliveryRepository
 {
     public DeliveryRepository(AppDbContext context) : base(context) { }
+
+    public async Task<IEnumerable<Delivery>> FindByOrderIdAsync(int orderId) =>
+        await Context.Set<Delivery>().Where(d => d.OrderId == orderId).ToListAsync();
 }

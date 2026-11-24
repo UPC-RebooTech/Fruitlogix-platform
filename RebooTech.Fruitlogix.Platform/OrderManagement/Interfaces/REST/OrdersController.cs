@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using RebooTech.Fruitlogix.Platform.Logistics.Application.CommandServices;
+using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Commands;
+using RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest;
 using RebooTech.Fruitlogix.Platform.Iam.Interfaces.Rest;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Application.CommandServices;
@@ -12,11 +15,13 @@ namespace RebooTech.Fruitlogix.Platform.OrderManagement.Interfaces.REST;
 
 [ApiController]
 [Route("api/v1/[controller]")]
+[DomainExceptionFilter]
 public class OrdersController(
     IOrderCommandService orderCommandService,
     IOrderQueryService orderQueryService,
     IAccessScopeService accessScope,
-    IOrderDependencyService orderDependencies) : ControllerBase
+    IOrderDependencyService orderDependencies,
+    IDeliveryCommandService deliveryCommandService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType(201)]
@@ -124,10 +129,30 @@ public class OrdersController(
         if (order is null)
             return NotFound($"Order with id {orderId} not found.");
 
+        // La recepción cierra también la entrega del pedido.
+        await deliveryCommandService.Handle(new MarkDeliveriesDeliveredByOrderCommand(orderId));
+
         // Aquí sí usamos el Assembler viejo porque vamos de Entity a Resource para mostrar el resultado
         return Ok(OrderResourceFromEntityAssembler.ToResourceFromEntity(order));
     }
     
+    /// <summary>Recepción confirmada del pedido (calificación, comentario, sello y temperatura).</summary>
+    [HttpGet("{orderId:int}/reception")]
+    [ProducesResponseType(typeof(OrderReceptionResource), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetOrderReception(int orderId)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (!await CanAccessOrderAsync(me, orderId)) return NotFound($"Order with id {orderId} not found.");
+
+        var order = await orderQueryService.Handle(new GetOrderByIdQuery(orderId));
+        if (order is null) return NotFound($"Order with id {orderId} not found.");
+
+        var reception = OrderResourceFromEntityAssembler.ToReceptionResourceFromEntity(order);
+        if (reception is null) return NotFound($"Order with id {orderId} has no confirmed reception yet.");
+        return Ok(reception);
+    }
+
     [HttpGet("producer/{producerId:int}")]
     public async Task<IActionResult> GetByProducerId(int producerId)
     {

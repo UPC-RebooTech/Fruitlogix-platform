@@ -53,7 +53,7 @@ public class OrderCommandService(
         var order = await orderRepository.FindByIdAsync(command.OrderId);
         if (order is null) return null;
 
-        order.ConfirmReception(command.Rating, command.Comment, command.HasIncidence);
+        order.ConfirmReception(command.Rating, command.Comment, command.HasIncidence, command.SealAndTemperatureOk);
         orderRepository.Update(order);
         await unitOfWork.CompleteAsync();
 
