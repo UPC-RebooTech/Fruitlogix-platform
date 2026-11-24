@@ -1,4 +1,6 @@
-﻿namespace RebooTech.Fruitlogix.Platform.PaymentManagement.Interfaces.REST.Resources;
+﻿using RebooTech.Fruitlogix.Platform.PaymentManagement.Domain.Model.ValueObjects;
+using RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest.OpenApi;
+namespace RebooTech.Fruitlogix.Platform.PaymentManagement.Interfaces.REST.Resources;
 
 public record PaymentTransactionResource(
     int Id,
@@ -8,6 +10,7 @@ public record PaymentTransactionResource(
     string Method,
     string Gateway,
     string GatewayRef,
+    [property: SwaggerEnumValues(typeof(TransactionStatus))]
     string Status,
     string? CardEnding,
     string? CardBrand,

@@ -35,8 +35,9 @@ public class OrdersController(
     IProductQueryService productQueryService) : ControllerBase
 {
     [HttpPost]
-    [ProducesResponseType(201)]
     [ProducesResponseType(400)]
+    [ProducesResponseType(typeof(OrderResource), 201)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> Create([FromBody] CreateOrderResource resource)
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -54,7 +55,7 @@ public class OrdersController(
     }
 
     [HttpGet]
-    [ProducesResponseType(200)]
+    [ProducesResponseType(typeof(IEnumerable<OrderResource>), 200)]
     public async Task<IActionResult> GetAll()
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -65,8 +66,8 @@ public class OrdersController(
     }
 
     [HttpGet("{id:int}")]
-    [ProducesResponseType(200)]
     [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(OrderResource), 200)]
     public async Task<IActionResult> GetById(int id)
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -78,7 +79,7 @@ public class OrdersController(
     }
 
     [HttpGet("client/{clientId:int}")]
-    [ProducesResponseType(200)]
+    [ProducesResponseType(typeof(IEnumerable<OrderResource>), 200)]
     public async Task<IActionResult> GetByClientId(int clientId)
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -89,8 +90,10 @@ public class OrdersController(
     }
 
     [HttpPut("{id:int}")]
-    [ProducesResponseType(200)]
     [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(OrderResource), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateOrderResource resource)
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -103,6 +106,10 @@ public class OrdersController(
     }
 
     [HttpPatch("{id:int}/assign-producer")]
+    [ProducesResponseType(typeof(OrderResource), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> AssignProducer(int id, [FromBody] AssignProducerResource resource)
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -151,8 +158,9 @@ public class OrdersController(
     }
 
     [HttpPatch("{id:int}/cancel")]
-    [ProducesResponseType(200)]
     [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(OrderResource), 200)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> Cancel(int id, [FromBody] CancelOrderResource resource)
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -165,6 +173,10 @@ public class OrdersController(
     }
     
     [HttpPost("{orderId:int}/reception")]
+    [ProducesResponseType(typeof(OrderResource), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> ConfirmOrderReception(
         int orderId, [FromBody] ConfirmOrderReceptionResource resource)
     {
@@ -204,6 +216,7 @@ public class OrdersController(
     }
 
     [HttpGet("producer/{producerId:int}")]
+    [ProducesResponseType(typeof(IEnumerable<OrderResource>), 200)]
     public async Task<IActionResult> GetByProducerId(int producerId)
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();

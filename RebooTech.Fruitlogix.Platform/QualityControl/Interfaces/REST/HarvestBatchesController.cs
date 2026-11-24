@@ -15,6 +15,7 @@ public class HarvestBatchesController(
 ) : ControllerBase
 {
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<HarvestBatchResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllHarvestBatches()
     {
         var query   = new GetAllHarvestBatchesQuery();
@@ -24,6 +25,8 @@ public class HarvestBatchesController(
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(HarvestBatchResource), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateHarvestBatch([FromBody] CreateHarvestBatchResource resource)
     {
         var command = HarvestBatchResourceAssembler.ToCommandFromResource(resource);
@@ -33,6 +36,9 @@ public class HarvestBatchesController(
     }
     
     [HttpPatch("{id:int}/status")]
+    [ProducesResponseType(typeof(HarvestBatchResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateHarvestBatchStatus(
         int id, [FromBody] UpdateHarvestBatchStatusResource resource)
     {

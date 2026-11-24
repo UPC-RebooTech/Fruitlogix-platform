@@ -67,6 +67,7 @@ using RebooTech.Fruitlogix.Platform.Iam.Infrastructure.Tokens.Jwt.Configuration;
 using RebooTech.Fruitlogix.Platform.Iam.Infrastructure.Tokens.Jwt.Services;
 using RebooTech.Fruitlogix.Platform.Iam.Interfaces.Acl;
 using Microsoft.OpenApi;
+using RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest.OpenApi;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);   
@@ -171,6 +172,12 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    options.EnableAnnotations();
+    options.SchemaFilter<EnumValuesSchemaFilter>();
+    // Comentarios /// de controllers y resources (GenerateDocumentationFile en el .csproj)
+    var xmlDocs = Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml");
+    if (File.Exists(xmlDocs)) options.IncludeXmlComments(xmlDocs, includeControllerXmlComments: true);
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,

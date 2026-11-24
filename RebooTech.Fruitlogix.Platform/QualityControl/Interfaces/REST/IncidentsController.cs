@@ -25,6 +25,7 @@ public class IncidentsController(
 {
     // GET api/v1/incidents
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<IncidentResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllIncidents()
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -37,6 +38,8 @@ public class IncidentsController(
 
     // POST api/v1/incidents
     [HttpPost]
+    [ProducesResponseType(typeof(IncidentResource), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateIncident([FromBody] CreateIncidentResource resource)
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -109,6 +112,9 @@ public class IncidentsController(
     private const long EvidenceRequestLimit = Incident.MaxEvidenceFiles * ImageUploadValidator.MaxBytes + 1024 * 1024;
 
     [HttpPatch("{id:int}/status")]
+    [ProducesResponseType(typeof(IncidentResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateIncidentStatus(
         int id, [FromBody] UpdateIncidentStatusResource resource)
     {

@@ -18,6 +18,9 @@ public class ProducersController(
     IAccessScopeService accessScope) : ControllerBase
 {
     [HttpPost]
+    [ProducesResponseType(typeof(ProducerResource), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateProducer([FromBody] CreateProducerResource resource)
     {
         if (this.GetCurrentUser() is not { } me) return Unauthorized();
@@ -38,6 +41,7 @@ public class ProducersController(
     }
 
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<ProducerResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllProducers()
     {
         var query     = new GetAllProducersQuery();
@@ -47,6 +51,8 @@ public class ProducersController(
     }
     
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(ProducerResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProducerById(int id)
     {
         var query    = new GetProducerByIdQuery(id);
@@ -56,6 +62,10 @@ public class ProducersController(
     }
     
     [HttpPut("{id:int}")]
+    [ProducesResponseType(typeof(ProducerResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> UpdateProducer(int id, [FromBody] UpdateProducerResource resource)
     {
         try
@@ -71,6 +81,8 @@ public class ProducersController(
     }
     
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteProducer(int id)
     {
         try

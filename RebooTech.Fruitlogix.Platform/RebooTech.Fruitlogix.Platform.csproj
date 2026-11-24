@@ -5,6 +5,9 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
       <UserSecretsId>6be0a2cb-e8ed-42a8-a459-67410571962f</UserSecretsId>
+        <!-- XML docs para Swagger. 1591: miembro sin comentario; 1573: parámetro sin comentario -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);1591;1573</NoWarn>
   </PropertyGroup>
 
     <ItemGroup>
