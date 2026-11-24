@@ -266,6 +266,24 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         }); 
         builder.Entity<Delivery>().Property(d => d.DelayReason);
         builder.Entity<Delivery>().Property(d => d.DistributorUserId).IsRequired(false);
+        builder.Entity<Delivery>().Property(d => d.DispatchedAt).IsRequired(false);
+        builder.Entity<Delivery>().Property(d => d.ArrivedAt).IsRequired(false);
+        builder.Entity<Delivery>().Property(d => d.DeliveredAt).IsRequired(false);
+
+        builder.Entity<DeliveryEvent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).IsRequired().ValueGeneratedOnAdd();
+            entity.Property(e => e.DeliveryId).IsRequired();
+            entity.Property(e => e.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(DeliveryEvent.MaxNameLength).IsRequired(false);
+            entity.Property(e => e.Note).HasMaxLength(DeliveryEvent.MaxNoteLength).IsRequired(false);
+            entity.Property(e => e.Latitude).IsRequired(false);
+            entity.Property(e => e.Longitude).IsRequired(false);
+            entity.Property(e => e.OccurredAt).IsRequired();
+            entity.Property(e => e.CreatedByUserId).IsRequired(false);
+            entity.HasIndex(e => e.DeliveryId);
+        });
         builder.Entity<Delivery>().HasIndex(d => d.DistributorUserId);
 
         builder.Entity<TrackingLog>().HasKey(t => t.Id);

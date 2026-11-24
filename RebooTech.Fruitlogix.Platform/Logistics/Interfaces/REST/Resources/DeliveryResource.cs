@@ -2,7 +2,7 @@
 using RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest.OpenApi;
 namespace RebooTech.Fruitlogix.Platform.Logistics.Interfaces.REST.Resources;
 
-/// <summary>Entrega. currentStatus: PendingDispatch → InTransit (start-dispatch) → Delayed (report-delay) → Delivered (recepción del pedido). Failed queda reservado.</summary>
+/// <summary>Entrega. currentStatus: PendingDispatch → InTransit (start-dispatch) → Delayed (report-delay, opcional) → Arrived (arrive) → Delivered (recepción del pedido). Failed queda reservado.</summary>
 public record DeliveryResource(
     int      Id,
     int      OrderId,
@@ -15,5 +15,8 @@ public record DeliveryResource(
     double   RouteDistanceKm,
     DateTime EstimatedTimeOfArrival,
     [property: SwaggerEnumValues(typeof(DeliveryStatus))]
-    string   CurrentStatus
+    string   CurrentStatus,
+    DateTimeOffset? DispatchedAt,
+    DateTimeOffset? ArrivedAt,
+    DateTimeOffset? DeliveredAt
 );

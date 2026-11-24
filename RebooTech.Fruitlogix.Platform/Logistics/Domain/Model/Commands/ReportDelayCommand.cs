@@ -1,3 +1,3 @@
 ﻿namespace RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Commands;
 
-public record ReportDelayCommand(int DeliveryId, string Reason);
+public record ReportDelayCommand(int DeliveryId, string Reason, int? ActorUserId = null);

@@ -1,4 +1,5 @@
-﻿using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Aggregates;
+﻿using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Entities;
+using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Commands;
 
 namespace RebooTech.Fruitlogix.Platform.Logistics.Application.CommandServices;
@@ -10,4 +11,7 @@ public interface IDeliveryCommandService
     Task<Delivery> Handle(ReportDelayCommand command);
     /// <summary>Devuelve cuántas entregas cambiaron a Delivered.</summary>
     Task<int> Handle(MarkDeliveriesDeliveredByOrderCommand command);
+    Task<Delivery> Handle(ArriveDeliveryCommand command);
+    Task<Delivery> Handle(UpdateDeliveryAssignmentCommand command);
+    Task<DeliveryEvent> Handle(AddDeliveryCheckpointCommand command);
 }

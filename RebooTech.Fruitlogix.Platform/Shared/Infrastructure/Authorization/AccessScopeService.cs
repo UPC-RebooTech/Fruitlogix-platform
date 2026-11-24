@@ -23,6 +23,8 @@ public interface IAccessScopeService
     Task<IReadOnlySet<int>?> GetVisibleDeliveryIdsAsync(CurrentUser user);
     Task<IReadOnlySet<int>?> GetVisibleInvoiceIdsAsync(CurrentUser user);
     Task<Func<Incident, bool>?> GetIncidentFilterAsync(CurrentUser user);
+
+    Task<bool> DeliveryExistsAsync(int deliveryId);
 }
 
 public class AccessScopeService(AppDbContext context) : IAccessScopeService
@@ -92,6 +94,9 @@ public class AccessScopeService(AppDbContext context) : IAccessScopeService
             .Select(i => i.Id)
             .ToListAsync()).ToHashSet();
     }
+
+    public Task<bool> DeliveryExistsAsync(int deliveryId) =>
+        context.Set<Delivery>().AnyAsync(d => d.Id == deliveryId);
 
     public async Task<Func<Incident, bool>?> GetIncidentFilterAsync(CurrentUser user)
     {

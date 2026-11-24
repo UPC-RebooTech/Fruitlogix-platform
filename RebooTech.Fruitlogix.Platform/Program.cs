@@ -113,6 +113,7 @@ builder.Services.AddScoped<IIncidentQueryService, IncidentQueryService>();
 builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
 builder.Services.AddScoped<IDeliveryCommandService, DeliveryCommandService>();
 builder.Services.AddScoped<IDeliveryQueryService, DeliveryQueryService>();
+builder.Services.AddScoped<IDeliveryEventRepository, DeliveryEventRepository>();
 builder.Services.AddScoped<ITrackingLogRepository, TrackingLogRepository>();
 builder.Services.AddScoped<ITrackingLogCommandService, TrackingLogCommandService>();
 builder.Services.AddScoped<ITrackingLogQueryService, TrackingLogQueryService>();

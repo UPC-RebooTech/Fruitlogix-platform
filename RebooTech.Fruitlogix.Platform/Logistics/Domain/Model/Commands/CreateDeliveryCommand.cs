@@ -10,5 +10,6 @@ public record CreateDeliveryCommand(
     string   RouteDestination,
     double   RouteDistanceKm,
     DateTime EstimatedTimeOfArrival,
-    int?     DistributorUserId = null
+    int?     DistributorUserId = null,
+    int?     ActorUserId = null
 );

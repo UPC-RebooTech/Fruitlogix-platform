@@ -6,5 +6,7 @@ public enum DeliveryStatus
     InTransit,
     Delayed,
     Delivered,
-    Failed
+    Failed,
+    /// <summary>Llegó al destino; la recepción del cliente la pasa a Delivered.</summary>
+    Arrived
 }

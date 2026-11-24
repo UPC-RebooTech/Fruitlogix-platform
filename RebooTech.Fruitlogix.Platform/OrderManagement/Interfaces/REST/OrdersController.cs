@@ -192,7 +192,7 @@ public class OrdersController(
             return NotFound($"Order with id {orderId} not found.");
 
         // La recepción cierra también la entrega del pedido.
-        await deliveryCommandService.Handle(new MarkDeliveriesDeliveredByOrderCommand(orderId));
+        await deliveryCommandService.Handle(new MarkDeliveriesDeliveredByOrderCommand(orderId, me.Id));
 
         // Aquí sí usamos el Assembler viejo porque vamos de Entity a Resource para mostrar el resultado
         return Ok(await ToResourceAsync(order));

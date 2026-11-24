@@ -217,6 +217,10 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("int")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("ArrivedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("arrived_at");
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetime")
                         .HasColumnName("created_at");
@@ -229,6 +233,14 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                     b.Property<string>("DelayReason")
                         .HasColumnType("longtext")
                         .HasColumnName("delay_reason");
+
+                    b.Property<DateTimeOffset?>("DeliveredAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("delivered_at");
+
+                    b.Property<DateTimeOffset?>("DispatchedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("dispatched_at");
 
                     b.Property<int?>("DistributorUserId")
                         .HasColumnType("int")
@@ -253,6 +265,58 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasDatabaseName("i_x_deliveries_distributor_user_id");
 
                     b.ToTable("deliveries");
+                });
+
+            modelBuilder.Entity("RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Entities.DeliveryEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<int>("DeliveryId")
+                        .HasColumnType("int")
+                        .HasColumnName("delivery_id");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double")
+                        .HasColumnName("latitude");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double")
+                        .HasColumnName("longitude");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("note");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_delivery_events");
+
+                    b.HasIndex("DeliveryId")
+                        .HasDatabaseName("i_x_delivery_events_delivery_id");
+
+                    b.ToTable("delivery_events");
                 });
 
             modelBuilder.Entity("RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Entities.TrackingLog", b =>

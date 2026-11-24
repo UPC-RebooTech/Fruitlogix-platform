@@ -17,6 +17,9 @@ public static class DeliveryResourceFromEntityAssembler
             entity.Route.Destination,
             entity.Route.DistanceKm,
             entity.EstimatedTimeOfArrival,
-            entity.CurrentStatus.ToString()
+            entity.CurrentStatus.ToString(),
+            entity.DispatchedAt,
+            entity.ArrivedAt,
+            entity.DeliveredAt
         );
 }

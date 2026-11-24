@@ -68,6 +68,11 @@ public class ProducersController(
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> UpdateProducer(int id, [FromBody] UpdateProducerResource resource)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (me.IsCommercialClient)
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Only the producer, a distributor or an admin can change a producer profile." });
+        if (!await CanManageProducerAsync(me, id)) return NotFound(new { message = $"Producer with id {id} not found." });
+
         try
         {
             var command  = ProducerResourceAssembler.ToCommandFromResource(id, resource);
@@ -85,11 +90,23 @@ public class ProducersController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteProducer(int id)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (me.IsCommercialClient)
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Only the producer, a distributor or an admin can delete a producer profile." });
+        if (!await CanManageProducerAsync(me, id)) return NotFound(new { message = $"Producer with id {id} not found." });
+
         try
         {
             await producerCommandService.Handle(new DeleteProducerCommand(id));
             return NoContent();
         }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+    }
+
+    /// <summary>Admin y Distributor: cualquier perfil. Producer: solo el suyo (producers.user_id).</summary>
+    private async Task<bool> CanManageProducerAsync(CurrentUser me, int producerId)
+    {
+        if (me.IsAdmin || me.IsDistributor) return true;
+        return me.IsProducer && await accessScope.GetProducerIdAsync(me) == producerId;
     }
 }

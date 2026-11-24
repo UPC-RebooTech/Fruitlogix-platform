@@ -36,8 +36,21 @@ public class TrackingLogsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(TrackingLogResource), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateTrackingLog([FromBody] CreateTrackingLogResource resource)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (me.IsCommercialClient)
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Only distributors, the order's producer or admins can send telemetry." });
+        // Admin/Distributor: cualquier entrega existente. Producer: solo entregas de sus pedidos.
+        var visible = await _accessScope.GetVisibleDeliveryIdsAsync(me);
+        var canWrite = visible is null
+            ? await _accessScope.DeliveryExistsAsync(resource.DeliveryId)
+            : visible.Contains(resource.DeliveryId);
+        if (!canWrite)
+            return NotFound(new { message = $"Delivery {resource.DeliveryId} not found." });
+
         var command = CreateTrackingLogCommandFromResourceAssembler.ToCommandFromResource(resource);
         var log     = await _trackingLogCommandService.Handle(command);
         var result  = TrackingLogResourceFromEntityAssembler.ToResourceFromEntity(log);

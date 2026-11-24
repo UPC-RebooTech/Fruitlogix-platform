@@ -1,5 +1,6 @@
 ﻿using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RebooTech.Fruitlogix.Platform.Iam.Interfaces.Rest;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
 using RebooTech.Fruitlogix.Platform.Logistics.Application.CommandServices;
@@ -48,7 +49,8 @@ public class DeliveriesController : ControllerBase
         // distributor_user_id: el Distributor que la registra; el valor del body solo se acepta de un Admin.
         command = command with
         {
-            DistributorUserId = me.IsAdmin ? resource.DistributorUserId : me.IsDistributor ? me.Id : null
+            DistributorUserId = me.IsAdmin ? resource.DistributorUserId : me.IsDistributor ? me.Id : null,
+            ActorUserId       = me.Id
         };
         var delivery = await _deliveryCommandService.Handle(command);
         var result   = DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery);
@@ -81,7 +83,7 @@ public class DeliveriesController : ControllerBase
         var visible = await _accessScope.GetVisibleDeliveryIdsAsync(me);
         if (visible is not null && !visible.Contains(id)) return NotFound();
 
-        var command  = new StartDispatchCommand(id);
+        var command  = new StartDispatchCommand(id, me.Id);
         var delivery = await _deliveryCommandService.Handle(command);
         // El pedido acompaña a la entrega: Pending/InPreparation pasan a InTransit (requisito de la recepción).
         await _orderCommandService.Handle(new MarkOrderDispatchedCommand(delivery.OrderId));
@@ -101,8 +103,111 @@ public class DeliveriesController : ControllerBase
         var visible = await _accessScope.GetVisibleDeliveryIdsAsync(me);
         if (visible is not null && !visible.Contains(id)) return NotFound();
 
-        var command  = new ReportDelayCommand(id, resource.Reason);
+        var command  = new ReportDelayCommand(id, resource.Reason, me.Id);
         var delivery = await _deliveryCommandService.Handle(command);
         return Ok(DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery));
+    }
+
+    /// <summary>Entrega por id (según el rol: Admin/Distributor todas, cliente y productor las de sus pedidos).</summary>
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(DeliveryResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDeliveryById(int id)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (!await CanSeeDeliveryAsync(me, id)) return NotFound();
+        var delivery = await _deliveryQueryService.Handle(new GetDeliveryByIdQuery(id));
+        if (delivery is null) return NotFound();
+        return Ok(DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery));
+    }
+
+    /// <summary>Entregas de un pedido (normalmente una). Lista vacía si el pedido no es visible.</summary>
+    [HttpGet("order/{orderId:int}")]
+    [ProducesResponseType(typeof(IEnumerable<DeliveryResource>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDeliveriesByOrderId(int orderId)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        var deliveries = await _deliveryQueryService.Handle(new GetDeliveriesByOrderIdQuery(orderId));
+        var visible    = await _accessScope.GetVisibleDeliveryIdsAsync(me);
+        return Ok(deliveries.WhereVisible(visible, d => d.Id)
+            .Select(DeliveryResourceFromEntityAssembler.ToResourceFromEntity));
+    }
+
+    /// <summary>Historial de la entrega: creada, despacho, retrasos, puntos de control, llegada y entrega.</summary>
+    [HttpGet("{id:int}/events")]
+    [ProducesResponseType(typeof(IEnumerable<DeliveryEventResource>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDeliveryEvents(int id)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (!await CanSeeDeliveryAsync(me, id)) return NotFound();
+        if (await _deliveryQueryService.Handle(new GetDeliveryByIdQuery(id)) is null) return NotFound();
+        var events = await _deliveryQueryService.Handle(new GetDeliveryEventsQuery(id));
+        return Ok(events.Select(DeliveryEventResourceFromEntityAssembler.ToResourceFromEntity));
+    }
+
+    /// <summary>Marca la llegada al destino (InTransit o Delayed → Arrived). Body opcional con coordenadas y nota.</summary>
+    [HttpPost("{id:int}/arrive")]
+    [ProducesResponseType(typeof(DeliveryResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Arrive(int id,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ArriveDeliveryResource? resource)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (me.IsCommercialClient)
+            return StatusCode(403, new { message = "Only a distributor, the order's producer or an admin can update a delivery." });
+        if (!await CanSeeDeliveryAsync(me, id)) return NotFound();
+
+        var delivery = await _deliveryCommandService.Handle(new ArriveDeliveryCommand(
+            id, me.Id, resource?.Latitude, resource?.Longitude, resource?.Note));
+        return Ok(DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery));
+    }
+
+    /// <summary>Asigna o cambia conductor, teléfono, vehículo y placa (antes de la llegada).</summary>
+    [HttpPatch("{id:int}/assignment")]
+    [ProducesResponseType(typeof(DeliveryResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateAssignment(int id, [FromBody] UpdateDeliveryAssignmentResource resource)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (me.IsCommercialClient)
+            return StatusCode(403, new { message = "Only a distributor, the order's producer or an admin can update a delivery." });
+        if (!await CanSeeDeliveryAsync(me, id)) return NotFound();
+
+        var delivery = await _deliveryCommandService.Handle(new UpdateDeliveryAssignmentCommand(
+            id, resource.DriverName, resource.DriverPhone, resource.VehiclePlate, resource.VehicleType));
+        return Ok(DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery));
+    }
+
+    /// <summary>Registra un punto de control con nombre (solo en tránsito o con retraso).</summary>
+    [HttpPost("{id:int}/checkpoints")]
+    [ProducesResponseType(typeof(DeliveryEventResource), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> AddCheckpoint(int id, [FromBody] AddDeliveryCheckpointResource resource)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (me.IsCommercialClient)
+            return StatusCode(403, new { message = "Only a distributor, the order's producer or an admin can update a delivery." });
+        if (!await CanSeeDeliveryAsync(me, id)) return NotFound();
+
+        var checkpoint = await _deliveryCommandService.Handle(new AddDeliveryCheckpointCommand(
+            id, me.Id, resource.Name, resource.Latitude, resource.Longitude, resource.Note, resource.OccurredAt));
+        return StatusCode(StatusCodes.Status201Created,
+            DeliveryEventResourceFromEntityAssembler.ToResourceFromEntity(checkpoint));
+    }
+
+    private async Task<bool> CanSeeDeliveryAsync(CurrentUser me, int deliveryId)
+    {
+        var visible = await _accessScope.GetVisibleDeliveryIdsAsync(me);
+        return visible is null || visible.Contains(deliveryId);
     }
 }

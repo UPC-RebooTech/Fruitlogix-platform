@@ -1,21 +1,24 @@
 ﻿using RebooTech.Fruitlogix.Platform.Logistics.Application.QueryServices;
 using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Aggregates;
+using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Entities;
 using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Queries;
 using RebooTech.Fruitlogix.Platform.Logistics.Domain.Repositories;
 
 namespace RebooTech.Fruitlogix.Platform.Logistics.Application.Internal.QueryServices;
 
-public class DeliveryQueryService : IDeliveryQueryService
+public class DeliveryQueryService(
+    IDeliveryRepository deliveryRepository,
+    IDeliveryEventRepository deliveryEventRepository) : IDeliveryQueryService
 {
-    private readonly IDeliveryRepository _deliveryRepository;
+    public async Task<IEnumerable<Delivery>> Handle(GetAllDeliveriesQuery query) =>
+        await deliveryRepository.ListAsync();
 
-    public DeliveryQueryService(IDeliveryRepository deliveryRepository)
-    {
-        _deliveryRepository = deliveryRepository;
-    }
+    public async Task<Delivery?> Handle(GetDeliveryByIdQuery query) =>
+        await deliveryRepository.FindByIdAsync(query.DeliveryId);
 
-    public async Task<IEnumerable<Delivery>> Handle(GetAllDeliveriesQuery query)
-    {
-        return await _deliveryRepository.ListAsync();
-    }
+    public async Task<IEnumerable<Delivery>> Handle(GetDeliveriesByOrderIdQuery query) =>
+        await deliveryRepository.FindByOrderIdAsync(query.OrderId);
+
+    public async Task<IEnumerable<DeliveryEvent>> Handle(GetDeliveryEventsQuery query) =>
+        await deliveryEventRepository.FindByDeliveryIdAsync(query.DeliveryId);
 }
