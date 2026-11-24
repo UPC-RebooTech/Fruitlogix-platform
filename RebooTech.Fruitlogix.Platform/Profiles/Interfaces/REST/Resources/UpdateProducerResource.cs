@@ -7,14 +7,14 @@ public record UpdateProducerResource(
     string    LegalName,
     string    Email,
     string    Phone,
-    string    Country,
-    string    Region,
-    string    City,
-    string    Address,
+    string?   Country,
+    string?   Region,
+    string?   City,
+    string?   Address,
     string    Crop,
     double    CultivatedHectares,
-    string    MonthlyProduction,
+    string?   MonthlyProduction,
     DateOnly? OperationsStartDate,
-    string    Certifications,
-    string    Photo
+    string?   Certifications,
+    string?   Photo
 );

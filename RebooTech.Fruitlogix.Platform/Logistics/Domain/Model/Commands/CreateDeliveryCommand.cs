@@ -3,9 +3,9 @@
 public record CreateDeliveryCommand(
     int      OrderId,
     string   DriverName,
-    string   DriverPhone,
+    string?  DriverPhone,
     string   VehiclePlate,
-    string   VehicleType,
+    string?  VehicleType,
     string   RouteOrigin,
     string   RouteDestination,
     double   RouteDistanceKm,

@@ -7,7 +7,7 @@ public record Location
     public string City    { get; }
     public string Address { get; }
 
-    public Location(string country, string region, string city, string address)
+    public Location(string? country, string? region, string? city, string? address)
     {
         Country = country ?? string.Empty;
         Region  = region  ?? string.Empty;

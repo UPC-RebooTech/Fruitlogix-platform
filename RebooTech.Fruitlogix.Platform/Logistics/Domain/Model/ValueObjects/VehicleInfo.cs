@@ -5,7 +5,7 @@ public record VehicleInfo
     public string Plate { get; }
     public string Type  { get; }
 
-    public VehicleInfo(string plate, string type)
+    public VehicleInfo(string plate, string? type)
     {
         if (string.IsNullOrWhiteSpace(plate))
             throw new ArgumentException("Vehicle plate is required.");

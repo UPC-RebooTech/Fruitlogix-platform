@@ -6,7 +6,7 @@ public record ProductionInfo
     public double CultivatedHectares  { get; }
     public string MonthlyProduction   { get; }
 
-    public ProductionInfo(string crop, double cultivatedHectares, string monthlyProduction)
+    public ProductionInfo(string crop, double cultivatedHectares, string? monthlyProduction)
     {
         if (string.IsNullOrWhiteSpace(crop))
             throw new ArgumentException("Crop is required.");

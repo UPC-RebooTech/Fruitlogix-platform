@@ -26,7 +26,7 @@ public class Incident : IAuditableEntity
 
     public Incident() { }
 
-    public Incident(int batchId, string description, List<string> evidenceUrls,
+    public Incident(int batchId, string description, List<string>? evidenceUrls,
         int? reportedByUserId = null, int? orderId = null)
     {
         ReportedByUserId = reportedByUserId;
