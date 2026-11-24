@@ -16,6 +16,7 @@ using RebooTech.Fruitlogix.Platform.Profiles.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Entities;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Interceptors;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Configuration.Converters;
 
 namespace RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
 
@@ -27,6 +28,18 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         base.OnConfiguring(builder);
     }
 
+    /// <summary>
+    ///     Todas las propiedades DateOnly se guardan como DATE pasando por DateTime: el proveedor MySQL
+    ///     devuelve DateTime para DATE y la lectura directa como DateOnly falla (InvalidCastException).
+    ///     Los value objects DeliveryDate y DueDate tienen su propio HasConversion a DateTime.
+    /// </summary>
+    protected override void ConfigureConventions(ModelConfigurationBuilder builder)
+    {
+        base.ConfigureConventions(builder);
+        builder.Properties<DateOnly>().HaveConversion<DateOnlyToDateTimeConverter>().HaveColumnType("date");
+        builder.Properties<DateOnly?>().HaveConversion<NullableDateOnlyToDateTimeConverter>().HaveColumnType("date");
+    }
+
     // 🌟 AQUÍ ESTÁ EL DBSET PARA LOS USUARIOS DEL IAM
     public DbSet<User> Users { get; set; }
 
@@ -34,13 +47,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     {
         base.OnModelCreating(builder);
         
-        builder.Entity<Producer>()
-            .Property(p => p.OperationsStartDate)
-            .HasConversion(
-                v => v.HasValue ? v.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null, // Al guardar en BD
-                v => v.HasValue ? DateOnly.FromDateTime(v.Value) : (DateOnly?)null         // Al leer de BD
-            )
-            .HasColumnType("date");
+        // Producer.OperationsStartDate (DateOnly?) usa la convención de ConfigureConventions.
 
         // Order Management
         builder.Entity<Order>().HasKey(o => o.Id);

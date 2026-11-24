@@ -229,7 +229,14 @@ builder.Services.AddSingleton<
 
 Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
+// ── Errores no controlados → 500 con ProblemDetails (con traceId) ─────────────
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Pipeline.GlobalExceptionHandler>();
+
 var app = builder.Build();
+
+// Primero en el pipeline: captura también lo que lancen Swagger, CORS y el middleware de autorización.
+app.UseExceptionHandler();
 
 // ── Migrations automáticas ────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
