@@ -11,6 +11,10 @@ public class Incident : IAuditableEntity
     public string EvidenceUrls { get; private set; } = string.Empty; // JSON serializado
     public IncidentStatus Status { get; private set; }
     public DateTimeOffset? ResolvedAt { get; private set; }
+    /// <summary>Usuario IAM que reportó la incidencia (null en datos antiguos).</summary>
+    public int? ReportedByUserId { get; private set; }
+    /// <summary>Pedido relacionado (null en datos antiguos).</summary>
+    public int? OrderId { get; private set; }
 
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
@@ -19,8 +23,11 @@ public class Incident : IAuditableEntity
 
     public Incident() { }
 
-    public Incident(int batchId, string description, List<string> evidenceUrls)
+    public Incident(int batchId, string description, List<string> evidenceUrls,
+        int? reportedByUserId = null, int? orderId = null)
     {
+        ReportedByUserId = reportedByUserId;
+        OrderId      = orderId;
         BatchId      = batchId;
         Description  = description;
         EvidenceUrls = System.Text.Json.JsonSerializer.Serialize(evidenceUrls);

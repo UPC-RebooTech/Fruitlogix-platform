@@ -37,6 +37,6 @@ public static class AuthenticatedUserResourceFromEntityAssembler
         if (string.IsNullOrEmpty(token))
             throw new ArgumentException("Token cannot be null or empty when creating authenticated user resource.",
                 nameof(token));
-        return new AuthenticatedUserResource(user.Id, user.Username, token);
+        return new AuthenticatedUserResource(user.Id, user.Username, token, user.Role.ToString());
     }
 }

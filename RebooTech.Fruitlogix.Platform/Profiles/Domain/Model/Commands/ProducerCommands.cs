@@ -16,7 +16,8 @@ public record CreateProducerCommand(
     string MonthlyProduction,
     DateOnly? OperationsStartDate,
     string Certifications,
-    string Photo
+    string Photo,
+    int? UserId = null
 );
 
 public record UpdateProducerCommand(

@@ -47,8 +47,12 @@ public class UsersController(
     [SwaggerResponse(StatusCodes.Status404NotFound, "The user was not found")]
     public async Task<IActionResult> GetUserById(int id, CancellationToken cancellationToken)
     {
-        var getUserByIdQuery = new GetUserByIdQuery(id);
-        var user = await userQueryService.Handle(getUserByIdQuery, cancellationToken);
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        // Quien no es Admin ni Distributor solo se ve a sí mismo; un id ajeno responde 404.
+        var canSeeOthers = me.IsAdmin || me.IsDistributor;
+        var user = canSeeOthers || me.Id == id
+            ? await userQueryService.Handle(new GetUserByIdQuery(id), cancellationToken)
+            : null;
 
         return IamActionResultAssembler.ToActionResultFromGetUserByIdResult(
             this,
@@ -73,9 +77,11 @@ public class UsersController(
     [SwaggerResponse(StatusCodes.Status200OK, "The users were found", typeof(IEnumerable<UserResource>))]
     public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
         var getAllUsersQuery = new GetAllUsersQuery();
         var users = await userQueryService.Handle(getAllUsersQuery, cancellationToken);
-        var userResources = users.Select(UserResourceFromEntityAssembler.ToResourceFromEntity);
+        var visibleUsers = me.IsAdmin || me.IsDistributor ? users : users.Where(u => u.Id == me.Id);
+        var userResources = visibleUsers.Select(UserResourceFromEntityAssembler.ToResourceFromEntity);
         return Ok(userResources);
     }
 }

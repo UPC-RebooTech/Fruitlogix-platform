@@ -21,6 +21,8 @@ public class Producer : IAuditableEntity
     public double         Rating              { get; private set; }
     public string         Certifications      { get; private set; }
     public string         Photo               { get; private set; }
+    /// <summary>Usuario IAM dueño del perfil (null en datos antiguos).</summary>
+    public int?           UserId              { get; private set; }
 
     // Constructor vacío requerido por EF Core
     protected Producer() { }
@@ -38,6 +40,7 @@ public class Producer : IAuditableEntity
         Rating              = 0.0;   // siempre inicializado aquí, nunca desde fuera
         Certifications      = command.Certifications ?? string.Empty;
         Photo               = command.Photo ?? string.Empty;
+        UserId              = command.UserId;
     }
     
     public void Update(UpdateProducerCommand command)

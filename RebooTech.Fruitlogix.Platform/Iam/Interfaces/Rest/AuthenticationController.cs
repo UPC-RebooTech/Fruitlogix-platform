@@ -83,6 +83,12 @@ public class AuthenticationController(
     public async Task<IActionResult> SignUp([FromBody] SignUpResource signUpResource,
         CancellationToken cancellationToken)
     {
+        if (!SignUpCommandFromResourceAssembler.TryParseRole(signUpResource.Role, out _))
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                ["role"] = [$"Rol no válido. Valores permitidos: {string.Join(", ", SignUpCommandFromResourceAssembler.SelfAssignableRoles)}."]
+            }));
+
         var signUpCommand = SignUpCommandFromResourceAssembler.ToCommandFromResource(signUpResource);
         var result = await userCommandService.Handle(signUpCommand, cancellationToken);
 

@@ -13,6 +13,8 @@ public class Delivery : IAuditableEntity
     public RouteInfo   Route              { get; private set; } = null!;
     public DateTime    EstimatedTimeOfArrival { get; private set; }
     public DeliveryStatus CurrentStatus   { get; private set; }
+    /// <summary>Usuario IAM distribuidor asignado (null en datos antiguos).</summary>
+    public int?   DistributorUserId       { get; private set; }
 
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
@@ -28,6 +30,7 @@ public class Delivery : IAuditableEntity
         Route                  = new RouteInfo(command.RouteOrigin, command.RouteDestination, command.RouteDistanceKm);
         EstimatedTimeOfArrival = command.EstimatedTimeOfArrival;
         CurrentStatus          = DeliveryStatus.PendingDispatch;
+        DistributorUserId      = command.DistributorUserId;
     }
 
     public void UpdateStatus(DeliveryStatus newStatus)

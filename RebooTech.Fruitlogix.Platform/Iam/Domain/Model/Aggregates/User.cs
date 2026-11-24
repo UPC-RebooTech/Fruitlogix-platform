@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using RebooTech.Fruitlogix.Platform.Iam.Domain.Model.ValueObjects;
 
 namespace RebooTech.Fruitlogix.Platform.Iam.Domain.Model.Aggregates;
 
@@ -16,8 +17,15 @@ public partial class User(string username, string passwordHash)
     {
     }
 
+    public User(string username, string passwordHash, UserRole role) : this(username, passwordHash)
+    {
+        Role = role;
+    }
+
     public int Id { get; }
     public string Username { get; private set; } = username;
+
+    public UserRole Role { get; private set; } = UserRole.CommercialClient;
 
     [JsonIgnore] public string PasswordHash { get; private set; } = passwordHash;
 

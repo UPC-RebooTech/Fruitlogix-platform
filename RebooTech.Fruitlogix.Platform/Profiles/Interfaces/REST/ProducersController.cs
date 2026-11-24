@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RebooTech.Fruitlogix.Platform.Iam.Interfaces.Rest;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
 using RebooTech.Fruitlogix.Platform.Profiles.Application.CommandServices;
 using RebooTech.Fruitlogix.Platform.Profiles.Application.QueryServices;
 using RebooTech.Fruitlogix.Platform.Profiles.Domain.Model.Commands;
@@ -12,14 +14,21 @@ namespace RebooTech.Fruitlogix.Platform.Profiles.Interfaces.REST;
 [Route("api/v1/[controller]")]
 public class ProducersController(
     IProducerCommandService producerCommandService,
-    IProducerQueryService producerQueryService) : ControllerBase
+    IProducerQueryService producerQueryService,
+    IAccessScopeService accessScope) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> CreateProducer([FromBody] CreateProducerResource resource)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        // Una cuenta Producer = un perfil de productor (producers.user_id). Otros roles crean perfiles sin dueño.
+        if (me.IsProducer && await accessScope.GetProducerIdAsync(me) is not null)
+            return Conflict(new { message = "This user already has a producer profile." });
+
         try
         {
-            var command  = ProducerResourceAssembler.ToCommandFromResource(resource);
+            var command  = ProducerResourceAssembler.ToCommandFromResource(resource)
+                with { UserId = me.IsProducer ? me.Id : null };
             var producer = await producerCommandService.Handle(command);
             var result   = ProducerResourceAssembler.ToResourceFromEntity(producer);
             return CreatedAtAction(nameof(CreateProducer), new { id = result.Id }, result);

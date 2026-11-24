@@ -9,5 +9,6 @@ public record CreateDeliveryResource(
     string   RouteOrigin,
     string   RouteDestination,
     double   RouteDistanceKm,
-    DateTime EstimatedTimeOfArrival
+    DateTime EstimatedTimeOfArrival,
+    int?     DistributorUserId = null
 );

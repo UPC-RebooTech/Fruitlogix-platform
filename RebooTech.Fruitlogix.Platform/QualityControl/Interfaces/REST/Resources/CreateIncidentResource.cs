@@ -3,5 +3,6 @@
 public record CreateIncidentResource(
     int BatchId,
     string Description,
-    List<string> EvidenceUrls
+    List<string> EvidenceUrls,
+    int? OrderId = null
 );

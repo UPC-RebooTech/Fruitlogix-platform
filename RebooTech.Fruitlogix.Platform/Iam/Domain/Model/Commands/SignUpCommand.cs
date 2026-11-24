@@ -1,3 +1,5 @@
+using RebooTech.Fruitlogix.Platform.Iam.Domain.Model.ValueObjects;
+
 namespace RebooTech.Fruitlogix.Platform.Iam.Domain.Model.Commands;
 
 /**
@@ -8,4 +10,4 @@ namespace RebooTech.Fruitlogix.Platform.Iam.Domain.Model.Commands;
  *     This command object includes the username and password to sign up
  * </remarks>
  */
-public record SignUpCommand(string Username, string Password);
+public record SignUpCommand(string Username, string Password, UserRole Role = UserRole.CommercialClient);

@@ -49,15 +49,42 @@ public class RequestAuthorizationMiddleware(RequestDelegate next)
         // get token from request header
         var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
-        if (token == null) throw new Exception("Null or invalid token");
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            await WriteUnauthorizedAsync(context, "Missing or malformed bearer token.");
+            return;
+        }
 
         var userId = await tokenService.ValidateToken(token);
-        if (userId == null) throw new Exception("Invalid token");
+        if (userId == null)
+        {
+            await WriteUnauthorizedAsync(context, "Invalid or expired token.");
+            return;
+        }
 
         var getUserByIdQuery = new GetUserByIdQuery(userId.Value);
         var user = await userQueryService.Handle(getUserByIdQuery, cancellationToken);
+        if (user == null)
+        {
+            await WriteUnauthorizedAsync(context, "The token user no longer exists.");
+            return;
+        }
+
         context.Items["User"] = user;
 
         await next(context);
+    }
+
+    /// <summary>Responde 401 (ProblemDetails) en vez de lanzar una excepción que termina en 500.</summary>
+    private static async Task WriteUnauthorizedAsync(HttpContext context, string detail)
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        context.Response.Headers.WWWAuthenticate = "Bearer";
+        await context.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Status = StatusCodes.Status401Unauthorized,
+            Title = "Unauthorized",
+            Detail = detail
+        }, options: null, contentType: "application/problem+json");
     }
 }

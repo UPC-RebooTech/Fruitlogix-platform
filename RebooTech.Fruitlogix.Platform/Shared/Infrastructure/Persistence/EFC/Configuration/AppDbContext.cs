@@ -115,6 +115,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<Producer>().Property(p => p.Rating).IsRequired();
         builder.Entity<Producer>().Property(p => p.Certifications);
         builder.Entity<Producer>().Property(p => p.Photo);
+        builder.Entity<Producer>().Property(p => p.UserId).IsRequired(false);
+        builder.Entity<Producer>().HasIndex(p => p.UserId);
 
         builder.Entity<Producer>().OwnsOne(p => p.TaxId, vo =>
         {
@@ -219,6 +221,10 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
                 .IsRequired();
 
             entity.Property(i => i.ResolvedAt);
+            entity.Property(i => i.ReportedByUserId).IsRequired(false);
+            entity.Property(i => i.OrderId).IsRequired(false);
+            entity.HasIndex(i => i.ReportedByUserId);
+            entity.HasIndex(i => i.OrderId);
         });
 
         // Delivery
@@ -251,6 +257,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             nav.WithOwner().HasForeignKey("Id"); 
         }); 
         builder.Entity<Delivery>().Property(d => d.DelayReason);
+        builder.Entity<Delivery>().Property(d => d.DistributorUserId).IsRequired(false);
+        builder.Entity<Delivery>().HasIndex(d => d.DistributorUserId);
 
         builder.Entity<TrackingLog>().HasKey(t => t.Id);
         builder.Entity<TrackingLog>().Property(t => t.Id).IsRequired().ValueGeneratedOnAdd();
@@ -438,6 +446,10 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<User>().Property(u => u.Id).IsRequired().ValueGeneratedOnAdd();
         builder.Entity<User>().Property(u => u.Username).IsRequired().HasMaxLength(50);
         builder.Entity<User>().Property(u => u.PasswordHash).IsRequired();
+        builder.Entity<User>().Property(u => u.Role)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
         
         builder.UseSnakeCaseNamingConvention();
     }

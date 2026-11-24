@@ -1,5 +1,7 @@
 ﻿using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using RebooTech.Fruitlogix.Platform.Iam.Interfaces.Rest;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
 using RebooTech.Fruitlogix.Platform.Logistics.Application.CommandServices;
 using RebooTech.Fruitlogix.Platform.Logistics.Application.QueryServices;
 using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Queries;
@@ -15,11 +17,14 @@ public class TrackingLogsController : ControllerBase
 {
     private readonly ITrackingLogCommandService _trackingLogCommandService;
     private readonly ITrackingLogQueryService   _trackingLogQueryService;
+    private readonly IAccessScopeService        _accessScope;
 
     public TrackingLogsController(
         ITrackingLogCommandService trackingLogCommandService,
-        ITrackingLogQueryService   trackingLogQueryService)
+        ITrackingLogQueryService   trackingLogQueryService,
+        IAccessScopeService        accessScope)
     {
+        _accessScope               = accessScope;
         _trackingLogCommandService = trackingLogCommandService;
         _trackingLogQueryService   = trackingLogQueryService;
     }
@@ -41,6 +46,11 @@ public class TrackingLogsController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<TrackingLogResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTrackingLogsByDeliveryId([FromQuery] int deliveryId)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        var visible = await _accessScope.GetVisibleDeliveryIdsAsync(me);
+        if (visible is not null && !visible.Contains(deliveryId))
+            return Ok(Array.Empty<TrackingLogResource>());
+
         var query  = new GetTrackingLogsByDeliveryIdQuery(deliveryId);
         var logs   = await _trackingLogQueryService.Handle(query);
         var result = logs.Select(TrackingLogResourceFromEntityAssembler.ToResourceFromEntity);

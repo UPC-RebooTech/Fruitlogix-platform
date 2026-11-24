@@ -43,6 +43,7 @@ using RebooTech.Fruitlogix.Platform.QualityControl.Infrastructure.Persistence.EF
 using RebooTech.Fruitlogix.Platform.Shared.Domain.Repositories;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Configuration;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Persistence.EFC.Repositories;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Interfaces.ASP.Configuration;
 using RebooTech.Fruitlogix.Platform.Iam.Application.Acl;
 using RebooTech.Fruitlogix.Platform.Iam.Application.CommandServices;
@@ -68,6 +69,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // ── Shared ────────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IAccessScopeService, AccessScopeService>();
+builder.Services.AddScoped<IOrderDependencyService, OrderDependencyService>();
 builder.Services.AddSingleton<RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest.ProblemDetails.ProblemDetailsFactory>();
 // ── Order Management ──────────────────────────────────────────────────────────
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();

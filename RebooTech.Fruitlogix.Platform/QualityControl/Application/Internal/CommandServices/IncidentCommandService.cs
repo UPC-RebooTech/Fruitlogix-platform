@@ -16,7 +16,9 @@ public class IncidentCommandService(
         var incident = new Incident(
             command.BatchId,
             command.Description,
-            command.EvidenceUrls
+            command.EvidenceUrls,
+            command.ReportedByUserId,
+            command.OrderId
         );
 
         await incidentRepository.AddAsync(incident);

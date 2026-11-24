@@ -1,5 +1,7 @@
 ﻿using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using RebooTech.Fruitlogix.Platform.Iam.Interfaces.Rest;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
 using RebooTech.Fruitlogix.Platform.Logistics.Application.CommandServices;
 using RebooTech.Fruitlogix.Platform.Logistics.Application.QueryServices;
 using RebooTech.Fruitlogix.Platform.Logistics.Domain.Model.Commands;
@@ -16,11 +18,14 @@ public class DeliveriesController : ControllerBase
 {
     private readonly IDeliveryCommandService _deliveryCommandService;
     private readonly IDeliveryQueryService   _deliveryQueryService;
+    private readonly IAccessScopeService     _accessScope;
 
     public DeliveriesController(
         IDeliveryCommandService deliveryCommandService,
-        IDeliveryQueryService deliveryQueryService)
+        IDeliveryQueryService deliveryQueryService,
+        IAccessScopeService accessScope)
     {
+        _accessScope            = accessScope;
         _deliveryCommandService = deliveryCommandService;
         _deliveryQueryService   = deliveryQueryService;
     }
@@ -31,7 +36,13 @@ public class DeliveriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateDelivery([FromBody] CreateDeliveryResource resource)
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
         var command  = CreateDeliveryCommandFromResourceAssembler.ToCommandFromResource(resource);
+        // distributor_user_id: el Distributor que la registra; el valor del body solo se acepta de un Admin.
+        command = command with
+        {
+            DistributorUserId = me.IsAdmin ? resource.DistributorUserId : me.IsDistributor ? me.Id : null
+        };
         var delivery = await _deliveryCommandService.Handle(command);
         var result   = DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery);
         return CreatedAtAction(nameof(CreateDelivery), new { id = result.Id }, result);
@@ -42,9 +53,11 @@ public class DeliveriesController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<DeliveryResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllDeliveries()
     {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
         var query      = new GetAllDeliveriesQuery();
         var deliveries = await _deliveryQueryService.Handle(query);
-        var result     = deliveries.Select(
+        var visible    = await _accessScope.GetVisibleDeliveryIdsAsync(me);
+        var result     = deliveries.WhereVisible(visible, d => d.Id).Select(
             DeliveryResourceFromEntityAssembler.ToResourceFromEntity);
         return Ok(result);
     }

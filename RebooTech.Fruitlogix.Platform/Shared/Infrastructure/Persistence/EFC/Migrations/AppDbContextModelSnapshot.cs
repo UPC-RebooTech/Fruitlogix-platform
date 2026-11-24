@@ -35,6 +35,12 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("password_hash");
 
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("role");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetime")
                         .HasColumnName("updated_at");
@@ -224,6 +230,10 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("delay_reason");
 
+                    b.Property<int?>("DistributorUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("distributor_user_id");
+
                     b.Property<DateTime>("EstimatedTimeOfArrival")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("estimated_time_of_arrival");
@@ -238,6 +248,9 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
 
                     b.HasKey("Id")
                         .HasName("p_k_deliveries");
+
+                    b.HasIndex("DistributorUserId")
+                        .HasDatabaseName("i_x_deliveries_distributor_user_id");
 
                     b.ToTable("deliveries");
                 });
@@ -647,8 +660,15 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("updated_at");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("user_id");
+
                     b.HasKey("Id")
                         .HasName("p_k_producers");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("i_x_producers_user_id");
 
                     b.ToTable("producers");
                 });
@@ -735,6 +755,14 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("evidence_urls");
 
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int")
+                        .HasColumnName("order_id");
+
+                    b.Property<int?>("ReportedByUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("reported_by_user_id");
+
                     b.Property<DateTimeOffset?>("ResolvedAt")
                         .HasColumnType("datetime")
                         .HasColumnName("resolved_at");
@@ -754,6 +782,12 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
 
                     b.HasKey("Id")
                         .HasName("p_k_incidents");
+
+                    b.HasIndex("OrderId")
+                        .HasDatabaseName("i_x_incidents_order_id");
+
+                    b.HasIndex("ReportedByUserId")
+                        .HasDatabaseName("i_x_incidents_reported_by_user_id");
 
                     b.ToTable("incidents");
                 });
