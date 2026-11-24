@@ -43,8 +43,8 @@ public class Order : IAuditableEntity
     {
         CommercialClientId = command.CommercialClientId;
         
-        // ¡OJO AQUÍ! El ProducerId nace nulo porque el Cliente no lo elige.
-        ProducerId = null; 
+        // Se llena solo cuando los ítems son productos del catálogo de un productor.
+        ProducerId = command.ProducerId is > 0 ? new ProducerId(command.ProducerId.Value) : null;
         
         DeliveryDueDate = new DeliveryDate(command.DeliveryDueDate);
         DeliveryAddress = command.DeliveryAddress; // Guardamos la dirección

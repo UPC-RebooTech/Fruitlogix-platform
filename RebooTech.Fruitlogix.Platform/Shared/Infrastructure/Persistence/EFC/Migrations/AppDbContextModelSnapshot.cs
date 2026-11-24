@@ -636,6 +636,80 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                     b.ToTable("payment_transactions");
                 });
 
+            modelBuilder.Entity("RebooTech.Fruitlogix.Platform.ProductCatalog.Domain.Model.Aggregates.Product", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    b.Property<double>("AvailableKg")
+                        .HasColumnType("double")
+                        .HasColumnName("available_kg");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("FruitType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("fruit_type");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("image_url");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_active");
+
+                    b.Property<double>("MinOrderKg")
+                        .HasColumnType("double")
+                        .HasColumnName("min_order_kg");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("ProducerId")
+                        .HasColumnType("int")
+                        .HasColumnName("producer_id");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("unit_price");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Variety")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("variety");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_products");
+
+                    b.HasIndex("FruitType")
+                        .HasDatabaseName("i_x_products_fruit_type");
+
+                    b.HasIndex("ProducerId")
+                        .HasDatabaseName("i_x_products_producer_id");
+
+                    b.ToTable("products");
+                });
+
             modelBuilder.Entity("RebooTech.Fruitlogix.Platform.Profiles.Domain.Model.Aggregates.Producer", b =>
                 {
                     b.Property<int>("Id")

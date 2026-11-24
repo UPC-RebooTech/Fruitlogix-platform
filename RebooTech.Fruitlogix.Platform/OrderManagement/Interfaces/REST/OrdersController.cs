@@ -16,6 +16,8 @@ using RebooTech.Fruitlogix.Platform.Profiles.Domain.Model.Queries;
 using RebooTech.Fruitlogix.Platform.QualityControl.Application.QueryServices;
 using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Queries;
 using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.ValueObjects;
+using RebooTech.Fruitlogix.Platform.ProductCatalog.Application.QueryServices;
+using RebooTech.Fruitlogix.Platform.ProductCatalog.Domain.Model.Queries;
 
 namespace RebooTech.Fruitlogix.Platform.OrderManagement.Interfaces.REST;
 
@@ -29,7 +31,8 @@ public class OrdersController(
     IOrderDependencyService orderDependencies,
     IDeliveryCommandService deliveryCommandService,
     IProducerQueryService producerQueryService,
-    IHarvestBatchQueryService harvestBatchQueryService) : ControllerBase
+    IHarvestBatchQueryService harvestBatchQueryService,
+    IProductQueryService productQueryService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType(201)]
@@ -40,6 +43,10 @@ public class OrdersController(
         var command = CreateOrderCommandFromResourceAssembler.ToCommandFromResource(resource);
         // Un cliente solo crea pedidos a su nombre: se ignora el commercialClientId del body.
         if (me.IsCommercialClient) command = command with { CommercialClientId = me.Id };
+
+        var (catalogCommand, catalogError) = await ApplyCatalogAsync(command);
+        if (catalogError is not null) return catalogError;
+        command = catalogCommand!;
         var order = await orderCommandService.Handle(command);
         if (order is null) return BadRequest();
         var orderResource = await ToResourceAsync(order);
@@ -250,6 +257,45 @@ public class OrdersController(
     {
         var visible = await accessScope.GetVisibleOrderIdsAsync(me);
         return visible is null || visible.Contains(orderId);
+    }
+
+    /// <summary>
+    ///     Transición al catálogo (opción B): los ítems cuyo productId existe en /products se validan
+    ///     (activo, pedido mínimo, stock) y toman nombre y precio del catálogo; el pedido queda con el
+    ///     productor de esos productos. Los productId desconocidos se aceptan como antes.
+    ///     No descuenta stock.
+    /// </summary>
+    private async Task<(CreateOrderCommand? Command, IActionResult? Error)> ApplyCatalogAsync(CreateOrderCommand command)
+    {
+        var items = new List<CreateOrderItemCommand>();
+        var producerIds = new HashSet<int>();
+
+        foreach (var item in command.Items ?? [])
+        {
+            var product = item.ProductId > 0
+                ? await productQueryService.Handle(new GetProductByIdQuery(item.ProductId))
+                : null;
+            if (product is null)
+            {
+                items.Add(item);
+                continue;
+            }
+
+            if (!product.IsActive)
+                return (null, BadRequest(new { message = $"Product {product.Id} ({product.Name}) is not available." }));
+            if (item.QuantityKg < product.MinOrderKg)
+                return (null, BadRequest(new { message = $"Minimum order for product {product.Id} ({product.Name}) is {product.MinOrderKg} kg." }));
+            if (item.QuantityKg > product.AvailableKg)
+                return (null, Conflict(new { message = $"Only {product.AvailableKg} kg of product {product.Id} ({product.Name}) are available." }));
+
+            producerIds.Add(product.ProducerId);
+            items.Add(item with { ProductName = product.Name, UnitPrice = product.UnitPrice });
+        }
+
+        if (producerIds.Count > 1)
+            return (null, BadRequest(new { message = "All catalog products in an order must belong to the same producer." }));
+
+        return (command with { Items = items, ProducerId = producerIds.Count == 1 ? producerIds.First() : null }, null);
     }
 
     private static string ProducerDisplayName(Profiles.Domain.Model.Aggregates.Producer producer) =>

@@ -34,6 +34,12 @@ using RebooTech.Fruitlogix.Platform.Profiles.Domain.Repositories;
 using RebooTech.Fruitlogix.Platform.Profiles.Infrastructure.Persistence.EFC.Repositories;
 using RebooTech.Fruitlogix.Platform.Profiles.Application.QueryServices;
 using RebooTech.Fruitlogix.Platform.Profiles.Application.Internal.QueryServices;
+using RebooTech.Fruitlogix.Platform.ProductCatalog.Application.CommandServices;
+using RebooTech.Fruitlogix.Platform.ProductCatalog.Application.QueryServices;
+using RebooTech.Fruitlogix.Platform.ProductCatalog.Application.Internal.CommandServices;
+using RebooTech.Fruitlogix.Platform.ProductCatalog.Application.Internal.QueryServices;
+using RebooTech.Fruitlogix.Platform.ProductCatalog.Domain.Repositories;
+using RebooTech.Fruitlogix.Platform.ProductCatalog.Infrastructure.Persistence.EFC.Repositories;
 using RebooTech.Fruitlogix.Platform.QualityControl.Application.CommandServices;
 using RebooTech.Fruitlogix.Platform.QualityControl.Application.Internal.CommandServices;
 using RebooTech.Fruitlogix.Platform.QualityControl.Application.Internal.QueryServices;
@@ -81,6 +87,11 @@ builder.Services.AddScoped<IOrderQueryService, OrderQueryService>();
 builder.Services.AddScoped<IProducerRepository, ProducerRepository>();
 builder.Services.AddScoped<IProducerCommandService, ProducerCommandService>();
 builder.Services.AddScoped<IProducerQueryService, ProducerQueryService>();
+
+// ── Product Catalog BC ────────────────────────────────────────────────────────
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductCommandService, ProductCommandService>();
+builder.Services.AddScoped<IProductQueryService, ProductQueryService>();
 
 // ── Quality Control BC ────────────────────────────────────────────────────────
 builder.Services.AddScoped<IHarvestBatchRepository, HarvestBatchRepository>();

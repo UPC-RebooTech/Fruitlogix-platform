@@ -6,7 +6,8 @@ public record CreateOrderCommand(
     string DeliveryAddress,
     decimal TotalAmount,
     string? Notes,   
-    List<CreateOrderItemCommand> Items 
+    List<CreateOrderItemCommand> Items,
+    int? ProducerId = null
 );
 
 public record CreateOrderItemCommand(

@@ -11,6 +11,7 @@ using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.Entities;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.ValueObjects;
 using RebooTech.Fruitlogix.Platform.PaymentManagement.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.PaymentManagement.Domain.Model.ValueObjects;
+using RebooTech.Fruitlogix.Platform.ProductCatalog.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.Profiles.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Entities;
@@ -446,6 +447,26 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             content.Property(c => c.Value)
                 .HasColumnName("content")
                 .IsRequired();
+        });
+
+        // Product Catalog
+        builder.Entity<Product>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Id).IsRequired().ValueGeneratedOnAdd();
+            entity.Property(p => p.ProducerId).IsRequired();
+            entity.Property(p => p.Name).IsRequired().HasMaxLength(Product.MaxNameLength);
+            entity.Property(p => p.FruitType).IsRequired().HasMaxLength(Product.MaxFruitTypeLength);
+            entity.Property(p => p.Variety).HasMaxLength(Product.MaxVarietyLength).IsRequired(false);
+            entity.Property(p => p.Description).HasMaxLength(Product.MaxDescriptionLength).IsRequired(false);
+            entity.Property(p => p.UnitPrice).HasColumnType("decimal(10,2)").IsRequired();
+            entity.Property(p => p.AvailableKg).IsRequired();
+            entity.Property(p => p.MinOrderKg).IsRequired();
+            entity.Property(p => p.ImageUrl).HasMaxLength(Product.MaxImageUrlLength).IsRequired(false);
+            entity.Property(p => p.IsActive).IsRequired();
+            entity.Ignore(p => p.IsAvailable);
+            entity.HasIndex(p => p.ProducerId);
+            entity.HasIndex(p => p.FruitType);
         });
 
         // -- IAM CONFIGURATION --
