@@ -1,6 +1,6 @@
 @RebooTech.Fruitlogix.Platform_HostAddress = http://localhost:5078
 
-GET {{RebooTech.Fruitlogix.Platform_HostAddress}}/weatherforecast/
+GET {{RebooTech.Fruitlogix.Platform_HostAddress}}/swagger/v1/swagger.json
 Accept: application/json
 
 ###

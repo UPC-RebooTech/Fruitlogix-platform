@@ -50,6 +50,24 @@ public class ProducersController(
         return Ok(result);
     }
     
+    /// <summary>Perfil de productor del usuario autenticado (rol Producer). 404 si aún no lo creó.</summary>
+    [HttpGet("me")]
+    [ProducesResponseType(typeof(ProducerResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyProducerProfile()
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (!me.IsProducer)
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Only producers have a producer profile." });
+
+        var producerId = await accessScope.GetProducerIdAsync(me);
+        var producer = producerId is null ? null : await producerQueryService.Handle(new GetProducerByIdQuery(producerId.Value));
+        if (producer is null)
+            return NotFound(new { message = "Producer profile not created yet. Use POST /api/v1/producers." });
+        return Ok(ProducerResourceAssembler.ToResourceFromEntity(producer));
+    }
+
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ProducerResource), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

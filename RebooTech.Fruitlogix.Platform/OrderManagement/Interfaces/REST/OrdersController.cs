@@ -127,6 +127,34 @@ public class OrdersController(
         return Ok(await ToResourceAsync(order));
     }
 
+    /// <summary>
+    ///     Decisión del productor: accept (Pending → InPreparation) o reject (Pending/InPreparation → Rejected, con reason).
+    ///     Lo pueden usar el productor del pedido, Distributor y Admin.
+    /// </summary>
+    [HttpPatch("{id:int}/status")]
+    [ProducesResponseType(typeof(OrderResource), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateOrderStatusResource resource)
+    {
+        if (this.GetCurrentUser() is not { } me) return Unauthorized();
+        if (!await CanAccessOrderAsync(me, id)) return NotFound();
+        if (me.IsCommercialClient)
+            return StatusCode(403, new { message = "Only the order's producer, a distributor or an admin can accept or reject an order. Clients use PATCH /orders/{id}/cancel." });
+
+        if (!Enum.TryParse<OrderStatusAction>(resource?.Action, ignoreCase: true, out var action)
+            || !Enum.IsDefined(action) || int.TryParse(resource!.Action, out _))
+            return BadRequest(new { message = "Action must be 'accept' or 'reject'." });
+
+        var order = action == OrderStatusAction.Accept
+            ? await orderCommandService.Handle(new AcceptOrderCommand(id))
+            : await orderCommandService.Handle(new RejectOrderCommand(id, resource.Reason ?? string.Empty));
+        if (order is null) return NotFound();
+        return Ok(await ToResourceAsync(order));
+    }
+
     /// <summary>Vincula el lote de cosecha con el pedido (productor del pedido, Distributor o Admin).</summary>
     [HttpPatch("{id:int}/batch")]
     [ProducesResponseType(typeof(OrderResource), 200)]

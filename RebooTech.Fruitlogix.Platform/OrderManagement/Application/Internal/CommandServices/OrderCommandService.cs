@@ -91,4 +91,24 @@ public class OrderCommandService(
         }
         return order;
     }
+
+    public async Task<Order?> Handle(AcceptOrderCommand command)
+    {
+        var order = await orderRepository.GetOrderByIdWithItemsAsync(command.OrderId);
+        if (order is null) return null;
+        order.Accept();
+        orderRepository.Update(order);
+        await unitOfWork.CompleteAsync();
+        return order;
+    }
+
+    public async Task<Order?> Handle(RejectOrderCommand command)
+    {
+        var order = await orderRepository.GetOrderByIdWithItemsAsync(command.OrderId);
+        if (order is null) return null;
+        order.Reject(command.Reason);
+        orderRepository.Update(order);
+        await unitOfWork.CompleteAsync();
+        return order;
+    }
 }

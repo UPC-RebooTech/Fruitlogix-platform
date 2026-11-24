@@ -104,11 +104,28 @@ public class Order : IAuditableEntity
         Status = OrderStatus.Cancelled;
     }
 
+    /// <summary>El productor acepta el pedido: Pending → InPreparation.</summary>
+    public void Accept()
+    {
+        if (Status != OrderStatus.Pending)
+            throw new InvalidOperationException("Only pending orders can be accepted.");
+        if (ProducerId is null)
+            throw new InvalidOperationException("Assign a producer to the order before accepting it.");
+        Status = OrderStatus.InPreparation;
+    }
+
+    public const int MaxRejectionReasonLength = 500;
+
+    /// <summary>Pending o InPreparation → Rejected, con motivo.</summary>
     public void Reject(string reason)
     {
-        if (Status != OrderStatus.InPreparation)
-            throw new InvalidOperationException("Only orders in preparation can be rejected.");
-        CancellationReason = reason;
+        if (Status is not (OrderStatus.Pending or OrderStatus.InPreparation))
+            throw new InvalidOperationException("Only pending or in-preparation orders can be rejected.");
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("A rejection reason is required.", nameof(reason));
+        if (reason.Trim().Length > MaxRejectionReasonLength)
+            throw new ArgumentException($"The rejection reason cannot exceed {MaxRejectionReasonLength} characters.", nameof(reason));
+        CancellationReason = reason.Trim();
         Status = OrderStatus.Rejected;
     }
     

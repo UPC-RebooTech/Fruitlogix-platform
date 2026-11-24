@@ -13,4 +13,6 @@ public interface IOrderCommandService
     Task Handle(DeleteOrderCommand command);
     Task<Order?> Handle(AssignOrderBatchCommand command);
     Task<Order?> Handle(MarkOrderDispatchedCommand command);
+    Task<Order?> Handle(AcceptOrderCommand command);
+    Task<Order?> Handle(RejectOrderCommand command);
 }
