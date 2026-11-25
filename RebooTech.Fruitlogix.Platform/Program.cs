@@ -260,10 +260,27 @@ var app = builder.Build();
 app.UseExceptionHandler();
 
 // ── Migrations automáticas ────────────────────────────────────────────────────
-using (var scope = app.Services.CreateScope())
+// La BD (filess.io) limita el usuario a 5 conexiones simultáneas. Durante un deploy la instancia
+// anterior (o una API local) puede tenerlas ocupadas, así que se reintenta en vez de caer al primer fallo.
+const int migrationMaxAttempts = 8;
+var migrationRetryDelay = TimeSpan.FromSeconds(15);
+for (var attempt = 1; ; attempt++)
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+        break;
+    }
+    catch (Exception ex) when (attempt < migrationMaxAttempts && IsTransientConnectionError(ex))
+    {
+        app.Logger.LogWarning(
+            "Database connection unavailable while applying migrations (attempt {Attempt}/{Max}): {Message}. Retrying in {Delay}s.",
+            attempt, migrationMaxAttempts, ex.GetBaseException().Message, migrationRetryDelay.TotalSeconds);
+        MySql.Data.MySqlClient.MySqlConnection.ClearAllPools();
+        Thread.Sleep(migrationRetryDelay);
+    }
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────
@@ -281,3 +298,18 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Errores de conexión que conviene reintentar al arrancar: límite de conexiones del usuario (1226),
+// demasiadas conexiones en el servidor (1040) o servidor inalcanzable (1042).
+static bool IsTransientConnectionError(Exception ex)
+{
+    for (var current = ex; current is not null; current = current.InnerException)
+    {
+        if (current is MySql.Data.MySqlClient.MySqlException { Number: 1226 or 1040 or 1042 }) return true;
+        if (current.Message.Contains("max_user_connections", StringComparison.OrdinalIgnoreCase)
+            || current.Message.Contains("Too many connections", StringComparison.OrdinalIgnoreCase)
+            || current.Message.Contains("Unable to connect", StringComparison.OrdinalIgnoreCase))
+            return true;
+    }
+    return false;
+}
