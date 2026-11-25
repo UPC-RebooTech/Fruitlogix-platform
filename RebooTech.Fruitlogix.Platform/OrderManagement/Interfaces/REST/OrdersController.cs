@@ -5,6 +5,7 @@ using RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest;
 using RebooTech.Fruitlogix.Platform.Iam.Interfaces.Rest;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Traceability;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Naming;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Application.CommandServices;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Application.QueryServices;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.Commands;
@@ -34,7 +35,8 @@ public class OrdersController(
     IProducerQueryService producerQueryService,
     IHarvestBatchQueryService harvestBatchQueryService,
     IProductQueryService productQueryService,
-    IOrderTraceabilityService traceabilityService) : ControllerBase
+    IOrderTraceabilityService traceabilityService,
+    IClientNameService clientNameService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType(400)]
@@ -369,7 +371,8 @@ public class OrdersController(
             var producer = await producerQueryService.Handle(new GetProducerByIdQuery(order.ProducerId.Value));
             if (producer is not null) producerName = ProducerDisplayName(producer);
         }
-        return OrderResourceFromEntityAssembler.ToResourceFromEntity(order, producerName);
+        var clientName = await clientNameService.GetNameAsync(order.CommercialClientId);
+        return OrderResourceFromEntityAssembler.ToResourceFromEntity(order, producerName, clientName);
     }
 
     private async Task<List<OrderResource>> ToResourcesAsync(IEnumerable<Order> orders)
@@ -378,7 +381,9 @@ public class OrdersController(
         if (list.Count == 0) return [];
         var names = (await producerQueryService.Handle(new GetAllProducersQuery()))
             .ToDictionary(p => p.Id, ProducerDisplayName);
+        var clientNames = await clientNameService.GetNamesAsync(list.Select(o => o.CommercialClientId));
         return list.Select(o => OrderResourceFromEntityAssembler.ToResourceFromEntity(o,
-            o.ProducerId is not null && names.TryGetValue(o.ProducerId.Value, out var name) ? name : null)).ToList();
+            o.ProducerId is not null && names.TryGetValue(o.ProducerId.Value, out var name) ? name : null,
+            clientNames.GetValueOrDefault(o.CommercialClientId))).ToList();
     }
 }

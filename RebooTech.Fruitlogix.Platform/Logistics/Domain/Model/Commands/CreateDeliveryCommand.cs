@@ -2,14 +2,16 @@
 
 public record CreateDeliveryCommand(
     int      OrderId,
-    string   DriverName,
+    string?  DriverName,
     string?  DriverPhone,
-    string   VehiclePlate,
+    string?  VehiclePlate,
     string?  VehicleType,
     string   RouteOrigin,
     string   RouteDestination,
     double   RouteDistanceKm,
     DateTime EstimatedTimeOfArrival,
     int?     DistributorUserId = null,
-    int?     ActorUserId = null
+    int?     ActorUserId = null,
+    int?     DriverId = null,
+    int?     VehicleId = null
 );

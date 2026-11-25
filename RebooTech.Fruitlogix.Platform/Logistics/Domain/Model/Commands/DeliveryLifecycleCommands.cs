@@ -15,7 +15,9 @@ public record UpdateDeliveryAssignmentCommand(
     string? DriverName,
     string? DriverPhone,
     string? VehiclePlate,
-    string? VehicleType
+    string? VehicleType,
+    int? DriverId = null,
+    int? VehicleId = null
 );
 
 /// <summary>Registra un punto de control con nombre en la ruta.</summary>

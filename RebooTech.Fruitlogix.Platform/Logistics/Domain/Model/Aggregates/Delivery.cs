@@ -18,6 +18,9 @@ public class Delivery : IAuditableEntity
     public DateTimeOffset? DispatchedAt { get; private set; }
     public DateTimeOffset? ArrivedAt    { get; private set; }
     public DateTimeOffset? DeliveredAt  { get; private set; }
+    /// <summary>Chofer y vehículo de la flota (/drivers, /vehicles); null si se asignó solo con texto.</summary>
+    public int?   DriverId                { get; private set; }
+    public int?   VehicleId               { get; private set; }
 
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
@@ -28,12 +31,14 @@ public class Delivery : IAuditableEntity
     public Delivery(CreateDeliveryCommand command)
     {
         OrderId                = command.OrderId;
-        Driver                 = new DriverInfo(command.DriverName, command.DriverPhone);
-        Vehicle                = new VehicleInfo(command.VehiclePlate, command.VehicleType);
+        Driver                 = new DriverInfo(command.DriverName ?? string.Empty, command.DriverPhone);
+        Vehicle                = new VehicleInfo(command.VehiclePlate ?? string.Empty, command.VehicleType);
         Route                  = new RouteInfo(command.RouteOrigin, command.RouteDestination, command.RouteDistanceKm);
         EstimatedTimeOfArrival = command.EstimatedTimeOfArrival;
         CurrentStatus          = DeliveryStatus.PendingDispatch;
         DistributorUserId      = command.DistributorUserId;
+        DriverId               = command.DriverId;
+        VehicleId              = command.VehicleId;
     }
 
     public void UpdateStatus(DeliveryStatus newStatus)
@@ -84,11 +89,14 @@ public class Delivery : IAuditableEntity
     }
 
     /// <summary>Cambia conductor y/o vehículo; los valores null conservan el actual.</summary>
-    public void UpdateAssignment(string? driverName, string? driverPhone, string? vehiclePlate, string? vehicleType)
+    public void UpdateAssignment(string? driverName, string? driverPhone, string? vehiclePlate, string? vehicleType,
+        int? driverId = null, int? vehicleId = null)
     {
         if (CurrentStatus is DeliveryStatus.Arrived or DeliveryStatus.Delivered or DeliveryStatus.Failed)
             throw new InvalidOperationException("The assignment cannot change after the delivery arrived.");
         Driver  = new DriverInfo(driverName ?? Driver.Name, driverPhone ?? Driver.Phone);
         Vehicle = new VehicleInfo(vehiclePlate ?? Vehicle.Plate, vehicleType ?? Vehicle.Type);
+        if (driverId is not null) DriverId = driverId;
+        if (vehicleId is not null) VehicleId = vehicleId;
     }
 }

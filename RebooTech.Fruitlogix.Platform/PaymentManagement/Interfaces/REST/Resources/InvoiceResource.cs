@@ -14,5 +14,7 @@ public record InvoiceResource(
     string InvoiceType,
     DateTimeOffset? IssuedAt,
     DateTimeOffset? PaidAt,
-    int? IssuedByUserId
+    int? IssuedByUserId,
+    // Razón social del cliente (perfil) o su username.
+    string? ClientName
 );

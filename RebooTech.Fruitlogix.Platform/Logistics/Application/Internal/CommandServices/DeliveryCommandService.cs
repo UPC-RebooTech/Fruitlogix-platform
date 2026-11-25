@@ -87,7 +87,8 @@ public class DeliveryCommandService : IDeliveryCommandService
     public async Task<Delivery> Handle(UpdateDeliveryAssignmentCommand command)
     {
         var delivery = await FindOrThrowAsync(command.DeliveryId);
-        delivery.UpdateAssignment(command.DriverName, command.DriverPhone, command.VehiclePlate, command.VehicleType);
+        delivery.UpdateAssignment(command.DriverName, command.DriverPhone, command.VehiclePlate, command.VehicleType,
+            command.DriverId, command.VehicleId);
         _deliveryRepository.Update(delivery);
         await _unitOfWork.CompleteAsync();
         return delivery;

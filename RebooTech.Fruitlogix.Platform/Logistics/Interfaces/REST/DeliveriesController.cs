@@ -12,6 +12,10 @@ using RebooTech.Fruitlogix.Platform.Logistics.Interfaces.REST.Transform;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Application.CommandServices;
 using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.Commands;
 using RebooTech.Fruitlogix.Platform.Shared.Interfaces.Rest;
+using RebooTech.Fruitlogix.Platform.Fleet.Application.QueryServices;
+using RebooTech.Fruitlogix.Platform.Fleet.Domain.Model.Queries;
+using FleetDriver = RebooTech.Fruitlogix.Platform.Fleet.Domain.Model.Aggregates.Driver;
+using FleetVehicle = RebooTech.Fruitlogix.Platform.Fleet.Domain.Model.Aggregates.Vehicle;
 
 namespace RebooTech.Fruitlogix.Platform.Logistics.Interfaces.REST;
 
@@ -25,13 +29,19 @@ public class DeliveriesController : ControllerBase
     private readonly IDeliveryQueryService   _deliveryQueryService;
     private readonly IAccessScopeService     _accessScope;
     private readonly IOrderCommandService    _orderCommandService;
+    private readonly IDriverQueryService     _driverQueryService;
+    private readonly IVehicleQueryService    _vehicleQueryService;
 
     public DeliveriesController(
         IDeliveryCommandService deliveryCommandService,
         IDeliveryQueryService deliveryQueryService,
         IAccessScopeService accessScope,
-        IOrderCommandService orderCommandService)
+        IOrderCommandService orderCommandService,
+        IDriverQueryService driverQueryService,
+        IVehicleQueryService vehicleQueryService)
     {
+        _driverQueryService     = driverQueryService;
+        _vehicleQueryService    = vehicleQueryService;
         _accessScope            = accessScope;
         _orderCommandService    = orderCommandService;
         _deliveryCommandService = deliveryCommandService;
@@ -51,6 +61,19 @@ public class DeliveriesController : ControllerBase
         {
             DistributorUserId = me.IsAdmin ? resource.DistributorUserId : me.IsDistributor ? me.Id : null,
             ActorUserId       = me.Id
+        };
+
+        // Flota opcional: driverId / vehicleId completan los datos de texto del chofer y del vehículo.
+        var (driver, vehicle, fleetError) = await ResolveFleetAsync(resource.DriverId, resource.VehicleId);
+        if (fleetError is not null) return fleetError;
+        command = command with
+        {
+            DriverId     = driver?.Id,
+            VehicleId    = vehicle?.Id,
+            DriverName   = driver?.Name ?? command.DriverName,
+            DriverPhone  = driver is null ? command.DriverPhone : driver.Phone,
+            VehiclePlate = vehicle?.Plate ?? command.VehiclePlate,
+            VehicleType  = vehicle?.Type.ToString() ?? command.VehicleType
         };
         var delivery = await _deliveryCommandService.Handle(command);
         var result   = DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery);
@@ -180,8 +203,17 @@ public class DeliveriesController : ControllerBase
             return StatusCode(403, new { message = "Only a distributor, the order's producer or an admin can update a delivery." });
         if (!await CanSeeDeliveryAsync(me, id)) return NotFound();
 
+        var (driver, vehicle, fleetError) = await ResolveFleetAsync(resource.DriverId, resource.VehicleId);
+        if (fleetError is not null) return fleetError;
+
         var delivery = await _deliveryCommandService.Handle(new UpdateDeliveryAssignmentCommand(
-            id, resource.DriverName, resource.DriverPhone, resource.VehiclePlate, resource.VehicleType));
+            id,
+            driver?.Name ?? resource.DriverName,
+            driver is null ? resource.DriverPhone : driver.Phone ?? string.Empty,
+            vehicle?.Plate ?? resource.VehiclePlate,
+            vehicle?.Type.ToString() ?? resource.VehicleType,
+            driver?.Id,
+            vehicle?.Id));
         return Ok(DeliveryResourceFromEntityAssembler.ToResourceFromEntity(delivery));
     }
 
@@ -228,6 +260,25 @@ public class DeliveriesController : ControllerBase
             e.Longitude,
             e.CreatedByUserId is null ? "Geofence" : "Manual",
             e.Note)));
+    }
+
+    /// <summary>Busca chofer y vehículo de la flota si vienen sus ids; 400 si alguno no existe.</summary>
+    private async Task<(FleetDriver? Driver, FleetVehicle? Vehicle, IActionResult? Error)> ResolveFleetAsync(
+        int? driverId, int? vehicleId)
+    {
+        FleetDriver? driver = null;
+        FleetVehicle? vehicle = null;
+        if (driverId is { } dId)
+        {
+            driver = await _driverQueryService.Handle(new GetDriverByIdQuery(dId));
+            if (driver is null) return (null, null, BadRequest(new { message = $"Driver {dId} not found." }));
+        }
+        if (vehicleId is { } vId)
+        {
+            vehicle = await _vehicleQueryService.Handle(new GetVehicleByIdQuery(vId));
+            if (vehicle is null) return (null, null, BadRequest(new { message = $"Vehicle {vId} not found." }));
+        }
+        return (driver, vehicle, null);
     }
 
     private async Task<bool> CanSeeDeliveryAsync(CurrentUser me, int deliveryId)

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RebooTech.Fruitlogix.Platform.Iam.Interfaces.Rest;
 using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Authorization;
+using RebooTech.Fruitlogix.Platform.Shared.Infrastructure.Naming;
 using RebooTech.Fruitlogix.Platform.PaymentManagement.Application.CommandServices;
 using RebooTech.Fruitlogix.Platform.PaymentManagement.Application.QueryServices;
 using RebooTech.Fruitlogix.Platform.PaymentManagement.Domain.Model.Queries;
@@ -14,7 +15,8 @@ namespace RebooTech.Fruitlogix.Platform.PaymentManagement.Interfaces.REST;
 public class InvoicesController(
     IInvoiceCommandService invoiceCommandService,
     IInvoiceQueryService invoiceQueryService,
-    IAccessScopeService accessScope) : ControllerBase
+    IAccessScopeService accessScope,
+    IClientNameService clientNameService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType(typeof(InvoiceResource), StatusCodes.Status201Created)]
@@ -26,7 +28,8 @@ public class InvoicesController(
             with { IssuedByUserId = me.Id };
         var invoice = await invoiceCommandService.Handle(command);
         if (invoice is null) return BadRequest();
-        var invoiceResource = InvoiceResourceFromEntityAssembler.ToResourceFromEntity(invoice);
+        var invoiceResource = InvoiceResourceFromEntityAssembler.ToResourceFromEntity(invoice,
+            await clientNameService.GetNameAsync(invoice.ClientId));
         return StatusCode(201, invoiceResource);
     }
 
@@ -38,7 +41,10 @@ public class InvoicesController(
         var query = new GetAllInvoicesQuery();
         var invoices = await invoiceQueryService.Handle(query);
         var visible = await accessScope.GetVisibleInvoiceIdsAsync(me);
-        var resources = invoices.WhereVisible(visible, i => i.Id).Select(InvoiceResourceFromEntityAssembler.ToResourceFromEntity);
+        var visibleInvoices = invoices.WhereVisible(visible, i => i.Id).ToList();
+        var clientNames = await clientNameService.GetNamesAsync(visibleInvoices.Select(i => i.ClientId));
+        var resources = visibleInvoices.Select(i =>
+            InvoiceResourceFromEntityAssembler.ToResourceFromEntity(i, clientNames.GetValueOrDefault(i.ClientId)));
         return Ok(resources);
     }
     
@@ -53,6 +59,7 @@ public class InvoicesController(
         if (invoice is null) return NotFound();
         var visible = await accessScope.GetVisibleInvoiceIdsAsync(me);
         if (visible is not null && !visible.Contains(invoice.Id)) return NotFound();
-        return Ok(InvoiceResourceFromEntityAssembler.ToResourceFromEntity(invoice));
+        return Ok(InvoiceResourceFromEntityAssembler.ToResourceFromEntity(invoice,
+            await clientNameService.GetNameAsync(invoice.ClientId)));
     }
 }

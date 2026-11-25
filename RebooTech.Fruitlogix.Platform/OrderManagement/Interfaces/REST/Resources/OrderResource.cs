@@ -21,5 +21,7 @@ public record OrderResource(
     DateTimeOffset? ReceivedAt,
     OrderReceptionResource? Reception,
     int? BatchId,
-    string? ProducerName
+    string? ProducerName,
+    // Razón social del cliente (perfil) o su username.
+    string? CommercialClientName
 );

@@ -18,5 +18,7 @@ public record DeliveryResource(
     string   CurrentStatus,
     DateTimeOffset? DispatchedAt,
     DateTimeOffset? ArrivedAt,
-    DateTimeOffset? DeliveredAt
+    DateTimeOffset? DeliveredAt,
+    int? DriverId,
+    int? VehicleId
 );

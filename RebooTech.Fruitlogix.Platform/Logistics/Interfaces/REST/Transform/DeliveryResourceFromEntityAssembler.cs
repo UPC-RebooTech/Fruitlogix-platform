@@ -20,6 +20,8 @@ public static class DeliveryResourceFromEntityAssembler
             entity.CurrentStatus.ToString(),
             entity.DispatchedAt,
             entity.ArrivedAt,
-            entity.DeliveredAt
+            entity.DeliveredAt,
+            entity.DriverId,
+            entity.VehicleId
         );
 }

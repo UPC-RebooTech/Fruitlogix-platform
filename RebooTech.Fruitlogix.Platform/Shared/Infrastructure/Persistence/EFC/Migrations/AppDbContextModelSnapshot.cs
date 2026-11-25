@@ -19,6 +19,131 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                 .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("RebooTech.Fruitlogix.Platform.Fleet.Domain.Model.Aggregates.Driver", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("ColdChainCertified")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("cold_chain_certified");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("created_at");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<string>("LicenseClass")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)")
+                        .HasColumnName("license_class");
+
+                    b.Property<DateTime>("LicenseExpiry")
+                        .HasColumnType("date")
+                        .HasColumnName("license_expiry");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("phone");
+
+                    b.Property<DateTimeOffset?>("RestUntil")
+                        .HasColumnType("datetime")
+                        .HasColumnName("rest_until");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_drivers");
+
+                    b.ToTable("drivers");
+                });
+
+            modelBuilder.Entity("RebooTech.Fruitlogix.Platform.Fleet.Domain.Model.Aggregates.Vehicle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    b.Property<double>("CapacityKg")
+                        .HasColumnType("double")
+                        .HasColumnName("capacity_kg");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("created_at");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<double>("MaxCelsius")
+                        .HasColumnType("double")
+                        .HasColumnName("max_celsius");
+
+                    b.Property<double>("MinCelsius")
+                        .HasColumnType("double")
+                        .HasColumnName("min_celsius");
+
+                    b.Property<string>("Plate")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("varchar(7)")
+                        .HasColumnName("plate");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("type");
+
+                    b.Property<string>("UnitCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("unit_code");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_vehicles");
+
+                    b.HasIndex("Plate")
+                        .IsUnique()
+                        .HasDatabaseName("i_x_vehicles_plate");
+
+                    b.ToTable("vehicles");
+                });
+
             modelBuilder.Entity("RebooTech.Fruitlogix.Platform.Iam.Domain.Model.Aggregates.User", b =>
                 {
                     b.Property<int>("Id")
@@ -246,6 +371,10 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("int")
                         .HasColumnName("distributor_user_id");
 
+                    b.Property<int?>("DriverId")
+                        .HasColumnType("int")
+                        .HasColumnName("driver_id");
+
                     b.Property<DateTime>("EstimatedTimeOfArrival")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("estimated_time_of_arrival");
@@ -258,11 +387,21 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("updated_at");
 
+                    b.Property<int?>("VehicleId")
+                        .HasColumnType("int")
+                        .HasColumnName("vehicle_id");
+
                     b.HasKey("Id")
                         .HasName("p_k_deliveries");
 
                     b.HasIndex("DistributorUserId")
                         .HasDatabaseName("i_x_deliveries_distributor_user_id");
+
+                    b.HasIndex("DriverId")
+                        .HasDatabaseName("i_x_deliveries_driver_id");
+
+                    b.HasIndex("VehicleId")
+                        .HasDatabaseName("i_x_deliveries_vehicle_id");
 
                     b.ToTable("deliveries");
                 });
@@ -931,7 +1070,7 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("fruit_type");
 
-                    b.Property<DateOnly>("HarvestDate")
+                    b.Property<DateTime>("HarvestDate")
                         .HasColumnType("date")
                         .HasColumnName("harvest_date");
 
@@ -960,6 +1099,69 @@ namespace RebooTech.Fruitlogix.Platform.Migrations
                         .HasName("p_k_harvest_batches");
 
                     b.ToTable("harvest_batches");
+                });
+
+            modelBuilder.Entity("RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Aggregates.HarvestPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CrewName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("crew_name");
+
+                    b.Property<double>("EstimatedYieldKg")
+                        .HasColumnType("double")
+                        .HasColumnName("estimated_yield_kg");
+
+                    b.Property<string>("FruitType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("fruit_type");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("notes");
+
+                    b.Property<int>("Pickers")
+                        .HasColumnType("int")
+                        .HasColumnName("pickers");
+
+                    b.Property<int>("ProducerId")
+                        .HasColumnType("int")
+                        .HasColumnName("producer_id");
+
+                    b.Property<DateTimeOffset>("ScheduledFor")
+                        .HasColumnType("datetime")
+                        .HasColumnName("scheduled_for");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetime")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Zone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("zone");
+
+                    b.HasKey("Id")
+                        .HasName("p_k_harvest_plans");
+
+                    b.HasIndex("ProducerId")
+                        .HasDatabaseName("i_x_harvest_plans_producer_id");
+
+                    b.ToTable("harvest_plans");
                 });
 
             modelBuilder.Entity("RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Aggregates.Incident", b =>

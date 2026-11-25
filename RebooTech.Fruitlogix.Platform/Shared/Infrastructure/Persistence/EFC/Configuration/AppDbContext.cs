@@ -12,6 +12,7 @@ using RebooTech.Fruitlogix.Platform.OrderManagement.Domain.Model.ValueObjects;
 using RebooTech.Fruitlogix.Platform.PaymentManagement.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.PaymentManagement.Domain.Model.ValueObjects;
 using RebooTech.Fruitlogix.Platform.ProductCatalog.Domain.Model.Aggregates;
+using RebooTech.Fruitlogix.Platform.Fleet.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.Profiles.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Aggregates;
 using RebooTech.Fruitlogix.Platform.QualityControl.Domain.Model.Entities;
@@ -163,6 +164,22 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             vo.WithOwner().HasForeignKey("Id");
         });
 
+        // Harvest plans (cosechas programadas)
+        builder.Entity<HarvestPlan>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Id).IsRequired().ValueGeneratedOnAdd();
+            entity.Property(p => p.ProducerId).IsRequired();
+            entity.HasIndex(p => p.ProducerId);
+            entity.Property(p => p.FruitType).IsRequired().HasMaxLength(HarvestPlan.MaxFruitTypeLength);
+            entity.Property(p => p.ScheduledFor).IsRequired();
+            entity.Property(p => p.EstimatedYieldKg).IsRequired();
+            entity.Property(p => p.Zone).IsRequired().HasMaxLength(HarvestPlan.MaxZoneLength);
+            entity.Property(p => p.CrewName).IsRequired().HasMaxLength(HarvestPlan.MaxCrewNameLength);
+            entity.Property(p => p.Pickers).IsRequired();
+            entity.Property(p => p.Notes).HasMaxLength(HarvestPlan.MaxNotesLength).IsRequired(false);
+        });
+
         // Commercial client profile
         builder.Entity<CommercialClient>(entity =>
         {
@@ -297,6 +314,10 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<Delivery>().Property(d => d.DispatchedAt).IsRequired(false);
         builder.Entity<Delivery>().Property(d => d.ArrivedAt).IsRequired(false);
         builder.Entity<Delivery>().Property(d => d.DeliveredAt).IsRequired(false);
+        builder.Entity<Delivery>().Property(d => d.DriverId).IsRequired(false);
+        builder.Entity<Delivery>().Property(d => d.VehicleId).IsRequired(false);
+        builder.Entity<Delivery>().HasIndex(d => d.DriverId);
+        builder.Entity<Delivery>().HasIndex(d => d.VehicleId);
 
         builder.Entity<DeliveryEvent>(entity =>
         {
@@ -514,6 +535,36 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             entity.Ignore(p => p.IsAvailable);
             entity.HasIndex(p => p.ProducerId);
             entity.HasIndex(p => p.FruitType);
+        });
+
+        // Fleet
+        builder.Entity<Driver>(entity =>
+        {
+            entity.HasKey(d => d.Id);
+            entity.Property(d => d.Id).IsRequired().ValueGeneratedOnAdd();
+            entity.Property(d => d.Name).IsRequired().HasMaxLength(Driver.MaxNameLength);
+            entity.Property(d => d.Phone).HasMaxLength(Driver.MaxPhoneLength).IsRequired(false);
+            entity.Property(d => d.LicenseClass).IsRequired().HasMaxLength(Driver.MaxLicenseClassLength);
+            entity.Property(d => d.LicenseExpiry).IsRequired();
+            entity.Property(d => d.ColdChainCertified).IsRequired();
+            entity.Property(d => d.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(d => d.RestUntil).IsRequired(false);
+            entity.Property(d => d.CreatedByUserId).IsRequired(false);
+        });
+
+        builder.Entity<Vehicle>(entity =>
+        {
+            entity.HasKey(v => v.Id);
+            entity.Property(v => v.Id).IsRequired().ValueGeneratedOnAdd();
+            entity.Property(v => v.UnitCode).IsRequired().HasMaxLength(Vehicle.MaxUnitCodeLength);
+            entity.Property(v => v.Plate).IsRequired().HasMaxLength(Vehicle.PlateLength);
+            entity.HasIndex(v => v.Plate).IsUnique();
+            entity.Property(v => v.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(v => v.CapacityKg).IsRequired();
+            entity.Property(v => v.MinCelsius).IsRequired();
+            entity.Property(v => v.MaxCelsius).IsRequired();
+            entity.Property(v => v.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(v => v.CreatedByUserId).IsRequired(false);
         });
 
         // -- IAM CONFIGURATION --

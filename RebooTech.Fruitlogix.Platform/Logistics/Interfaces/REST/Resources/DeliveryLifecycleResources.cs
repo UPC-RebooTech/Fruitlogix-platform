@@ -35,7 +35,10 @@ public record UpdateDeliveryAssignmentResource(
     string? DriverName = null,
     string? DriverPhone = null,
     string? VehiclePlate = null,
-    string? VehicleType = null
+    string? VehicleType = null,
+    // Flota (opcional): si se envían, los datos de texto se toman del chofer y del vehículo.
+    int? DriverId = null,
+    int? VehicleId = null
 );
 
 /// <summary>Punto de control con nombre. occurredAt por defecto es ahora.</summary>

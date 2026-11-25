@@ -5,7 +5,7 @@ namespace RebooTech.Fruitlogix.Platform.PaymentManagement.Interfaces.REST.Transf
 
 public static class InvoiceResourceFromEntityAssembler
 {
-    public static InvoiceResource ToResourceFromEntity(Invoice entity) =>
+    public static InvoiceResource ToResourceFromEntity(Invoice entity, string? clientName = null) =>
         new(
             entity.Id,
             entity.ClientId,
@@ -17,6 +17,7 @@ public static class InvoiceResourceFromEntityAssembler
             entity.InvoiceType.ToString(),
             entity.IssuedAt,
             entity.PaidAt,
-            entity.IssuedByUserId
+            entity.IssuedByUserId,
+            clientName
         );
 }
